@@ -1,0 +1,838 @@
+<template>
+  <q-layout view="hHh lpr fFf">
+    <q-header elevated class="bg-primary text-white">
+      <q-toolbar>
+        <q-btn-dropdown stretch flat auto-close no-caps>
+          <template v-slot:label>
+            <div class="row items-center no-wrap">
+              <img src="../public/icon.png" style="display: block; height: 2rem; margin-right: 0.75rem;" />
+              <div>Sukashi</div>
+            </div>
+          </template>
+          <q-list>
+            <q-item @click="aboutModal = true" clickable>
+              <q-item-section>
+                <q-item-label>{{ $t('ABOUT_THIS_APP_HEADING') }}</q-item-label>
+              </q-item-section>
+            </q-item>
+            
+            <q-item-label header>Language</q-item-label>
+            <q-item clickable v-ripple @click="selectLanguage('ja')">
+              <q-item-section avatar side>
+                <q-icon v-if="$i18n.locale === 'ja'" color="primary" name="done" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>Japanese (日本語)</q-item-label>
+              </q-item-section>
+            </q-item>
+            <q-item clickable v-ripple @click="selectLanguage('en')">
+              <q-item-section avatar side>
+                <q-icon v-if="$i18n.locale === 'en'" color="primary" name="done" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>English</q-item-label>
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </q-btn-dropdown>
+
+        <q-space />
+
+        <q-separator dark vertical />
+        <q-btn stretch flat :label="$t('OPEN_IMAGE_BUTTON_LABEL')" @click="openGallery" />
+      </q-toolbar>
+
+    </q-header>
+
+    <q-page-container>
+      <q-page :style-fn="styleFn">
+        <EditorComponent v-if="imgSrc" :key="imgSrc.substring(0, 100)" :imgSrc="imgSrc" :config="editorConfig" ref="editor" @exif-loaded="onExifLoaded" @exif-not-found="onExifNotFound" @image-exported="onImageExported" @save-finished="onSaveFinished" @editor-size-changed="suggestSize" />
+        <div v-else :style="{ height: '100%', paddingTop: '35vh', paddingLeft: '10vw', paddingRight: '10vw', textAlign: 'center' }">
+          {{ $t('OPEN_IMAGE_GUIDE_TEXT') }}
+          <template v-if="isSafari || isIPhoneBrowser || isIPadBrowser">
+            <div>
+              <br>
+              <b>{{ $t('IOS_NOT_SUPPORTED_TEXT') }}</b>
+            </div>
+          </template>
+        </div>
+      </q-page>
+    </q-page-container>
+
+    <q-footer elevated>
+      <q-toolbar>
+        <q-btn-dropdown stretch flat :label="$t('SELECT_THEME_BUTTON_LABEL')" auto-close>
+          <q-list>
+            <q-item-label header>{{ $t('SELECT_THEME_GUIDE_LABEL') }}</q-item-label>
+            <q-item v-for="(name, index) in Object.keys(watermark)" :key="`${index}`" clickable @click="selectTheme(name)">
+              <q-item-section avatar side>
+                <q-icon v-if="theme === name" color="primary" name="done" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ watermark[name].name }}</q-item-label>
+                <!--<q-item-label caption>February 22, 2016</q-item-label>-->
+              </q-item-section>
+              <!--<q-item-section side>
+                <q-icon name="info" />
+              </q-item-section>-->
+            </q-item>
+          </q-list>
+
+        </q-btn-dropdown>
+
+        <q-btn-dropdown stretch flat :label="$t('EDIT_BUTTON_LABEL')" auto-close>
+          <q-list separator>
+            <q-item-label header>{{ $t('EDIT_GUIDE_LABEL') }}</q-item-label>
+            <q-item clickable v-ripple @click="returnToOriginalPosition">
+              <q-item-section avatar side>
+                <q-icon name="restart_alt" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ $t('RESET_TO_INITIAL_POSITION_LABEL') }}</q-item-label>
+              </q-item-section>
+            </q-item>
+
+            <q-item-label header>EXIF</q-item-label>
+            <q-item tag="label" v-ripple>
+              <q-item-section side top>
+                <q-checkbox v-model="preferConvertedFocalLength" />
+              </q-item-section>
+
+              <q-item-section>
+                <q-item-label>{{ $t('PREFER_35MM_CONVERTED_FOCAL_LENGTH_LABEL') }}</q-item-label>
+                <q-item-label caption>
+                  {{ $t('PREFER_35MM_CONVERTED_FOCAL_LENGTH_HINT') }}
+                </q-item-label>
+              </q-item-section>
+            </q-item>
+            <q-item tag="label" v-ripple>
+              <q-item-section side top>
+                <q-checkbox v-model="showShotDate" />
+              </q-item-section>
+
+              <q-item-section>
+                <q-item-label>{{ $t('SHOW_SHOT_DATE_LABEL') }}</q-item-label>
+                <q-item-label caption>
+                  {{ $t('SHOW_SHOT_DATE_HINT') }}
+                </q-item-label>
+              </q-item-section>
+            </q-item>
+            <q-item clickable v-ripple @click="openManufacturerEditModal">
+              <q-item-section avatar side>
+                <q-icon name="edit" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ $t('EDIT_MANUFACTURER_LABEL') }}</q-item-label>
+              </q-item-section>
+            </q-item>
+            <q-item clickable v-ripple @click="openModelEditModal">
+              <q-item-section avatar side>
+                <q-icon name="edit" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ $t('EDIT_MODEL_LABEL') }}</q-item-label>
+              </q-item-section>
+            </q-item>
+
+            <template v-if="!(isSafari || isIPhoneBrowser || isIPadBrowser)">
+              <q-item-label header>{{ $t('ADDITIONAL_WATERMARK_GUIDE_LABEL') }}</q-item-label>
+              <q-item tag="label" v-ripple @click="setupTwitterAccount">
+                <q-item-section avatar side>
+                  <q-icon v-if="additional === 'twitter'" color="primary" name="done" />
+                </q-item-section>
+
+                <q-item-section>
+                  <q-item-label>{{ $t('TWITTER_WATERMARK_LABEL') }}</q-item-label>
+                  <q-item-label caption>
+                    {{ $t('TWITTER_WATERMARK_HINT') }}
+                  </q-item-label>
+                </q-item-section>
+              </q-item>
+              <q-item tag="label" v-ripple @click="setAdditional('sukashi')">
+                <q-item-section avatar side>
+                  <q-icon v-if="additional === 'sukashi'" color="primary" name="done" />
+                </q-item-section>
+
+                <q-item-section>
+                  <q-item-label>{{ $t('SUKASHI_WATERMARK_LABEL') }}</q-item-label>
+                  <q-item-label caption>
+                    {{ $t('SUKASHI_WATERMARK_HINT') }}
+                  </q-item-label>
+                </q-item-section>
+              </q-item>
+            </template>
+
+            <q-item-label header>{{ $t('FONT_SELECT_GUIDE_LABEL') }}</q-item-label>
+            <q-item v-for="(f, index) in fonts" :key="index" clickable v-ripple @click="selectFont(f.family)">
+              <q-item-section avatar side>
+                <q-icon v-if="font === f.family" color="primary" name="done" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label :style="{ fontFamily: f.family }">{{ f.family }}</q-item-label>
+                <q-item-label caption v-if="f.example" :style="{ fontFamily: f.family }">{{ f.example }}</q-item-label>
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </q-btn-dropdown>
+
+        <q-space />
+        <q-separator dark vertical />
+
+        <q-btn-dropdown stretch flat :label="$t('EXPORT_BUTTON_LABEL')">
+          <q-list separator>
+            <q-item-label header>{{ $t('FORMAT_GUIDE_LABEL') }}</q-item-label>
+            <q-item v-for="(f, index) in formats" :key="index" clickable v-ripple @click="selectFormat(f.value)">
+              <q-item-section avatar side>
+                <q-icon v-if="format === f.value" color="primary" name="done" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ f.label }}</q-item-label>
+              </q-item-section>
+            </q-item>
+
+            <q-item clickable v-ripple>
+              <q-item-section>
+                <q-slider v-model="jpegQuality" :min="0" :max="100"/>
+                <q-item-label caption>{{ $t('JPEG_QUALITY_HINT') }}</q-item-label>
+              </q-item-section>
+              <q-item-section side top>
+                {{ jpegQuality < 100 ? '&nbsp;' : '' }}{{ jpegQuality }}
+              </q-item-section>
+            </q-item>
+
+            <q-item-label header>{{ $t('SELECT_SIZE_GUIDE_LABEL') }}</q-item-label>
+            <q-item v-for="(s, index) in exportSizesForThisImage" :key="index" clickable v-ripple @click="selectSize(s.value, s.disabled)" :disabled="s.disabled">
+              <q-item-section avatar side>
+                <q-icon v-if="size === s.value" color="primary" name="done" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ $t(s.label) }}</q-item-label>
+                <q-item-label caption>{{ s.expectedSize }}<span v-if="s.recommended">{{ s.expectedSize ? ', ' : '' }}<b>{{ $t('RECOMMENDED_TEXT') }}</b></span></q-item-label>
+              </q-item-section>
+            </q-item>
+
+            <q-item-label header>{{ $t('SAVE_GUIDE_TEXT') }}</q-item-label>
+            <q-item clickable v-ripple @click="save">
+              <q-item-section avatar side>
+                <q-icon name="save_alt" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ $t('SAVE_BUTTON_TEXT') }}</q-item-label>
+              </q-item-section>
+            </q-item>
+
+            <q-item tag="label" v-ripple v-if="isAndroid">
+              <q-item-section side top>
+                <q-checkbox v-model="openShareSheetAfterSaving" />
+              </q-item-section>
+
+              <q-item-section>
+                <q-item-label>{{ $t('OPEN_SHARE_MENU_LABEL') }}</q-item-label>
+                <q-item-label caption>
+                  {{ $t('OPEN_SHARE_MENU_HINT') }}
+                </q-item-label>
+              </q-item-section>
+            </q-item>
+
+            <q-item tag="label" v-ripple v-if="isAndroid">
+              <q-item-section side top>
+                <q-checkbox v-model="shareOnly" />
+              </q-item-section>
+
+              <q-item-section>
+                <q-item-label>{{ $t('SHARE_ONLY_LABEL') }}</q-item-label>
+                <q-item-label caption>
+                  {{ $t('SHARE_ONLY_HINT') }}
+                </q-item-label>
+              </q-item-section>
+            </q-item>
+
+            <q-item tag="label" v-ripple v-if="isAndroid">
+              <q-item-section side top>
+                <q-checkbox v-model="supportDevelopmentByHashtag" />
+              </q-item-section>
+
+              <q-item-section>
+                <q-item-label>{{ $t('SUPPORT_DEVELOPMENT_HASHTAG_LABEL') }}</q-item-label>
+                <q-item-label caption>
+                  {{ $t('SUPPORT_DEVELOPMENT_HASHTAG_HINT') }}
+                </q-item-label>
+              </q-item-section>
+            </q-item>
+
+          </q-list>          
+        </q-btn-dropdown>
+      </q-toolbar>
+    </q-footer>
+
+    <q-file v-show="false" v-model="file" ref="file" accept="image/jpeg" max-files="1" @update:model-value="fileUpdate" />
+
+    <q-dialog v-model="manufacturerPrompt" persistent @update:model-value="updateManufacturer">
+      <q-card style="min-width: 350px">
+        <q-card-section>
+          <div class="text-h6">{{ $t('EDIT_MANUFACTURER_LABEL') }}</div>
+        </q-card-section>
+
+        <q-separator inset />
+
+        <q-card-section v-if="exif.Make">
+          <span class="text-body1">{{ $t('EXIF_SUGGESTION') }} "{{ exif.Make }}" ({{ $t('EXIF_VALUE_TEXT') }})</span>
+        </q-card-section>
+
+        <q-card-section cla ss="q-pt-none">
+          <q-input dense v-model="manufacturerOverride" autofocus />
+        </q-card-section>
+
+        <q-card-actions align="right" class="text-primary">
+          <q-btn v-if="exif.Make" flat :label="$t('USE_SUGGESTED_BUTTON_LABEL')" @click="manufacturerOverride = exif.Make" v-close-popup />
+          <q-btn flat label="Close" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="modelPrompt" persistent @update:model-value="updateModel">
+      <q-card style="min-width: 350px">
+        <q-card-section>
+          <div class="text-h6">{{ $t('EDIT_MANUFACTURER_MODEL') }}</div>
+        </q-card-section>
+
+        <q-separator inset />
+
+        <q-card-section v-if="exif.Model">
+          <span class="text-body1">{{ $t('EXIF_SUGGESTION') }} "{{ exif.Model }}" ({{ $t('EXIF_VALUE_TEXT') }})</span>
+        </q-card-section>
+
+        <q-card-section cla ss="q-pt-none">
+          <q-input dense v-model="modelOverride" autofocus />
+        </q-card-section>
+
+        <q-card-actions align="right" class="text-primary">
+          <q-btn v-if="exif.Model" flat :label="$t('USE_SUGGESTED_BUTTON_LABEL')" @click="modelOverride = exif.Model" v-close-popup />
+          <q-btn flat label="Close" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="twitterPrompt" persistent @update:model-value="updateTwitterSetting">
+      <q-card style="min-width: 350px">
+        <q-card-section>
+          <div class="text-h6">{{ $t('TWITTER_ACCOUNT_SETTING_HEADING') }}</div>
+        </q-card-section>
+
+        <q-separator inset />
+
+        <q-card-section cla ss="q-pt-none">
+          <q-checkbox v-model="isTwitterAccountWatermarkEnabled" :label="$t('ENABLED_TEXT')" />
+        </q-card-section>
+
+        <q-card-section cla ss="q-pt-none">
+          <div class="text-subtitle1">{{ $t('TWITTER_ACCOUNT_SETTING_SCREEN_NAME_LABEL') }}</div>
+
+          <q-input v-model="twitterAccount" :hint="$t('TWITTER_ACCOUNT_SETTING_SCREEN_NAME_HINT')">
+            <template v-slot:prepend>
+              @
+            </template>
+          </q-input>
+        </q-card-section>
+
+        <q-card-actions align="right" class="text-primary">
+          <q-btn flat label="Close" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="saveDialog" persistent class="backdrop-opacity-1">
+      <q-card style="min-width: 350px; min-height: 350px;">
+        <q-inner-loading
+          :showing="true"
+          :label="$t('WAITING_EXPORT_DIALOG_TEXT')"
+          label-style="font-size: 1.1em"
+        />
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="exportPrompt">
+      <q-card style="min-width: 80%;">
+        <q-card-section>
+          <div class="text-h6">{{ $t('EXPORT_COMPLETED_HEADING') }}</div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          <img :src="blobUrl" class="exported-image">
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          <div class="text-body2">{{ $t('EXPORT_COMPLETED_TEXT') }}</div>
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat label="OK" color="primary" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+
+    <q-dialog v-model="noExifAlert">
+      <q-card>
+        <q-card-section>
+          <div class="text-h6">{{ $t('NO_EXIF_FOUND_HEADING') }}</div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          {{ $t('NO_EXIF_FOUND_TEXT') }}
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat label="OK" color="primary" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="aboutModal">
+      <q-card>
+        <q-card-section>
+          <div class="text-h6">{{ $t('ABOUT_THIS_APP_HEADING') }}</div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          <img src="../public/icon.png" style="width: 60%; display: block; margin: 0 auto;" />
+          <div style="text-align: center; font-weight: bold;">
+            Sukashi App
+          </div>
+          <div style="text-align: center;">
+            Developed by <a href="https://twitter.com/chiisama14" target="_blank">@chiisama14</a> (<a href="https://milky.blue" target="_blank">milky.blue</a>)
+            <br>
+            Powered by <a href="https://vuejs.org/" target="_blank">Vue</a>, <a href="https://quasar.dev/" target="_blank">Quasar</a> and <a href="https://cordova.apache.org/" target="_blank">Cordova</a> for Native App
+            <br>
+            <br>
+            <a href="https://milky.blue/sukashi" target="_blank">Web App</a>
+            <template v-if="!(isIPhoneBrowser || isIPadBrowser)">
+             | <a href="https://play.google.com/store/apps/details?id=app.sukashi" target="_blank">Android App</a>
+            </template>
+            | <a href="#">iOS App (Coming Soon)</a>
+          </div>
+        </q-card-section>
+
+        <q-separator inset />
+
+        <q-card-section>
+          <div class="text-subtitle1 text-weight-bold">{{ $t('ABOUT_FONTS_USED_IN_THIS_APP_HEADING') }}</div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          <div>{{ $t('ABOUT_FONTS_USED_IN_THIS_APP_DESCRIPTION') }}</div>
+        </q-card-section>
+        
+        <q-card-section v-for="f in fonts" :key="f" class="q-pt-none">
+          <div class="text-subtitle2">{{ f.family }}</div>
+          <pre style="white-space: pre-wrap; word-break: break-word;"><code>{{ f.license }}
+          
+{{ licenses[f.type] }}</code></pre>
+        </q-card-section>
+
+        <q-separator inset />
+
+        <q-card-actions align="right">
+          <q-btn flat label="OK" color="primary" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+  </q-layout>
+</template>
+
+<script>
+import canvasSize from 'canvas-size'
+
+import watermark from './watermark'
+
+import EditorComponent from './components/EditorComponent.vue'
+
+const licenses = {
+  OFL11: `This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license is copied below, and is also available with a FAQ at:
+http://scripts.sil.org/OFL`
+}
+
+export default {
+  name: 'LayoutDefault',
+
+  components: {
+    EditorComponent
+  },
+  computed: {
+    watermark() {
+      return watermark
+    },
+    licenses() {
+      return licenses
+    },
+    fonts() {
+      return [ {
+        family: 'Lato',
+        license: 'Copyright (c) 2010-2014 by tyPoland Lukasz Dziedzic (team@latofonts.com) with Reserved Font Name "Lato"',
+        type: 'OFL11'
+      }, {
+        family: 'PT Sans Narrow',
+        license: 'Copyright (c) 2010, ParaType Ltd. (http://www.paratype.com/public), with Reserved Font Names "PT Sans" and "ParaType".',
+        type: 'OFL11'
+      }, {
+        family: 'Zilla Slab',
+        license: 'Copyright 2017, The Mozilla Foundation',
+        type: 'OFL11'
+      }, {
+        family: 'Source Serif Pro',
+        license: 'Copyright 2014 Adobe Systems Incorporated (http://www.adobe.com/), with Reserved Font Name \'Source\'. All Rights Reserved. Source is a trademark of Adobe Systems Incorporated in the United States and/or other countries.',
+        type: 'OFL11'
+      }, {
+        family: 'EB Garamond',
+        license: 'Copyright 2017 The EB Garamond Project Authors (https://github.com/octaviopardo/EBGaramond12)',
+        type: 'OFL11'
+      }, {
+        family: 'Ibarra Real Nova',
+        license: 'Copyright 2007 The Ibarra Real Nova Project Authors (https://github.com/googlefonts/ibarrareal)',
+        type: 'OFL11'
+      }, {
+        family: 'Cardo',
+        license: 'Copyright (c) 2002-2011, David J. Perry (hospes02@scholarsfonts.net)',
+        type: 'OFL11'
+      }, {
+        family: 'Gentium Book Plus',
+        license: 'Copyright (c) 2003-2022 SIL International (http://www.sil.org/), with Reserved Font Names "Gentium" and "SIL".',
+        type: 'OFL11'
+      }, {
+        family: 'Literata',
+        license: 'Copyright 2017 The Literata Project Authors (https://github.com/googlefonts/literata)',
+        type: 'OFL11'
+      }, {
+        family: 'Kanit',
+        example: 'vivo-like',
+        license: 'Copyright 2020 The Kanit Project Authors (https://github.com/cadsondemak/kanit)',
+        type: 'OFL11'
+      } ]
+    },
+    formats() {
+      return [ {
+        label: 'PNG',
+        value: 'png'
+      }, {
+        label: 'JPEG',
+        value: 'jpg'
+      } ]
+    },
+    exportSizes() {
+      return [ {
+        label: 'ORIGINAL_SIZE_TEXT',
+        value: 100
+      }, {
+        label: '75%',
+        value: 75
+      }, {
+        label: '50%',
+        value: 50
+      }, {
+        label: '25%',
+        value: 25
+      } ]
+    },
+    editorConfig() {
+      return {
+        themeName: this.theme,
+        fontName: this.font,
+        preferConvertedFocalLength: this.preferConvertedFocalLength,
+        showShotDate: this.showShotDate,
+        format: this.format,
+        jpegQuality: this.jpegQuality,
+        size: this.size,
+        openShareSheetAfterSaving: this.openShareSheetAfterSaving,
+        additional: this.additional,
+        supportDevelopmentByHashtag: this.supportDevelopmentByHashtag,
+        shareOnly: this.shareOnly,
+        twitterAccount: this.twitterPrompt ? '' : this.twitterAccount // prompt が開いている間も送ってしまうと、一文字変更ごとにイベントが発生して相手のサーバに迷惑をかけてしまうので
+      }
+    }
+  },
+  data() {
+    return {
+      file: null,
+      theme: window.localStorage['theme'] || 'standard',
+      font: window.localStorage['font'] || 'Lato',
+      format: window.localStorage['format'] || 'jpg',
+      size: 100,
+      preferConvertedFocalLength: window.localStorage['preferConvertedFocalLength'] ? window.localStorage['preferConvertedFocalLength'] === 'true' : true,
+      showShotDate: window.localStorage['showShotDate'] ? window.localStorage['showShotDate'] === 'true' : true,
+      jpegQuality: window.localStorage['jpegQuality'] ? parseInt(window.localStorage['jpegQuality']) : 100,
+      openShareSheetAfterSaving: window.localStorage['openShareSheetAfterSaving'] ? window.localStorage['openShareSheetAfterSaving'] === 'true' : true,
+      supportDevelopmentByHashtag: window.localStorage['supportDevelopmentByHashtag'] ? window.localStorage['supportDevelopmentByHashtag'] === 'true' : true,
+      additional: window.localStorage['additional'] ? window.localStorage['additional'] : 'none',
+      manufacturerOverride: null,
+      modelOverride: null,
+      twitterAccount: window.localStorage['twitterAccount'] ? window.localStorage['twitterAccount'] : '',
+      shareOnly: window.localStorage['shareOnly'] ? window.localStorage['shareOnly'] === 'true' : false,
+      language: window.localStorage['locale'] || window.navigator.language,
+
+      // model
+      isTwitterAccountWatermarkEnabled: false,
+
+      //
+      imgSrc: null,
+      blobUrl: null,
+
+      //
+      manufacturerPrompt: false,
+      modelPrompt: false,
+      twitterPrompt: false,
+      exportPrompt: false,
+      noExifAlert: false,
+      exif: null,
+      saveDialog: false,
+      aboutModal: false,
+
+      //
+      exportSizesForThisImage: null
+    }
+  },
+  watch: {
+    preferConvertedFocalLength() {
+      window.localStorage['preferConvertedFocalLength'] = this.preferConvertedFocalLength
+    },
+    showShotDate() {
+      window.localStorage['showShotDate'] = this.showShotDate
+    },
+    jpegQuality() {
+      window.localStorage['jpegQuality'] = this.jpegQuality
+    },
+    openShareSheetAfterSaving() {
+      window.localStorage['openShareSheetAfterSaving'] = this.openShareSheetAfterSaving
+    },
+    shareOnly() {
+      window.localStorage['shareOnly'] = this.shareOnly
+    },
+    supportDevelopmentByHashtag() {
+      window.localStorage['supportDevelopmentByHashtag'] = this.supportDevelopmentByHashtag
+    },
+    exportPrompt(newValue) {
+      if (!newValue) {
+        if (this.blobUrl) {
+          URL.revokeObjectURL(this.blobUrl)
+        }
+      }
+    }
+  },
+  methods: {
+    styleFn(offset) {
+      return { 
+        height: offset ? `calc(100vh - ${offset}px)` : '100vh',
+        overflow: 'hidden'
+      }
+    },
+    openGallery() {
+      this.$refs.file.pickFiles()
+    },
+    selectTheme(theme) {
+      this.theme = theme
+      window.localStorage['theme'] = theme
+    },
+    selectFont(font) {
+      this.font = font
+      window.localStorage['font'] = font
+    },
+    selectFormat(format) {
+      this.format = format
+      window.localStorage['format'] = format
+    },
+    selectSize(size, disabled) {
+      if (disabled) {
+        return
+      }
+
+      this.size = size
+    },
+    setAdditional(additional) {
+      if (this.additional === additional) {
+        this.additional = 'none'
+      } else {
+        this.additional = additional
+      }
+
+      window.localStorage['additional'] = this.additional
+    },
+    selectLanguage(locale) {
+      this.$i18n.locale = locale
+      window.localStorage['locale'] = locale
+    },
+    returnToOriginalPosition() {
+      this.$refs.editor.returnToOriginalPosition()
+    },
+    onExifLoaded(exif) {
+      this.exif = exif
+
+      const manufacturerSuggestion = window.localStorage[`suggestion/${this.exif.Make}/${this.exif.Model}/manufacturer`]
+
+      if (manufacturerSuggestion) {
+        this.$refs.editor.setManufacturer(manufacturerSuggestion)
+      }
+
+      const modelSuggestion = window.localStorage[`suggestion/${this.exif.Make}/${this.exif.Model}/model`]
+
+      if (modelSuggestion) {
+        this.$refs.editor.setModel(modelSuggestion)
+      }
+
+      this.suggestSize()
+    },
+    onExifNotFound() {
+      this.imgSrc = null
+      this.noExifAlert = true
+    },
+    onImageExported(blobUrl) {
+      this.blobUrl = blobUrl
+      this.exportPrompt = true
+    },
+    openManufacturerEditModal() {
+      this.manufacturerOverride = this.$refs.editor.getManufacturer()
+      this.manufacturerPrompt = true
+    },
+    openModelEditModal() {
+      this.modelOverride = this.$refs.editor.getModel()
+      this.modelPrompt = true
+    },
+    setupTwitterAccount() {
+      this.isTwitterAccountWatermarkEnabled = this.additional === 'twitter'
+      this.twitterPrompt = true
+    },
+    updateManufacturer() {
+      const changed = this.$refs.editor.getManufacturer() !== this.manufacturerOverride
+
+      if (!changed) {
+        return
+      }
+
+      this.$refs.editor.setManufacturer(this.manufacturerOverride)
+
+      window.localStorage[`suggestion/${this.exif.Make}/${this.exif.Model}/manufacturer`] = this.manufacturerOverride
+    },
+    updateModel() {
+      const changed = this.$refs.editor.getModel() !== this.modelOverride
+
+      if (!changed) {
+        return
+      }
+
+      this.$refs.editor.setModel(this.modelOverride)
+
+      window.localStorage[`suggestion/${this.exif.Make}/${this.exif.Model}/model`] = this.modelOverride
+    },
+    updateTwitterSetting() {
+      if (this.isTwitterAccountWatermarkEnabled) {
+        this.additional = 'twitter'
+      } else {
+        if (this.additional !== 'sukashi') {
+          this.additional = 'none'
+        }
+      }
+
+      window.localStorage['additional'] = this.additional
+      window.localStorage['twitterAccount'] = this.twitterAccount
+    },
+    fileUpdate() {
+      const reader = new FileReader()
+
+      reader.onload = (e) => {
+        this.imgSrc = e.target.result
+      }
+
+      reader.readAsDataURL(this.file)
+      //this.imgSrc = window.URL.createObjectURL(this.file)
+    },
+    suggestSize() {
+      const originalSize = this.$refs.editor.getOriginalSize()
+
+      this.exportSizesForThisImage = window.deepCopy(this.exportSizes)
+
+      const recommendedCandidates = [ ]
+
+      for (const size of this.exportSizesForThisImage) {
+        const width = Math.floor(originalSize.width * size.value / 100)
+        const height = Math.floor(originalSize.height * size.value / 100)
+
+        const result = canvasSize.test({
+          width: originalSize.width * size.value / 100,
+          height: originalSize.height * size.value / 100
+        })
+
+        size.expectedSize = `${ width } x ${ height } px`
+        size.expectedLongSide = Math.max(width, height)
+
+        if (result) {
+          recommendedCandidates.push(size)
+        } else {
+          size.disabled = true
+        }
+      }
+
+      let candidate = null
+
+      for (const size of recommendedCandidates) {
+        // 4K 解像度以上の中で最小のものを推奨とする。recommendedCandidates は大きい順で入っているので、candidate を更新していけば条件を満たすものが見つかる
+        if (size.expectedLongSide > 3840) {
+          candidate = size
+        }
+      }
+
+      if (candidate == null) {
+        // 4K 解像度を満たす選択肢がない場合、一番大きいもの
+        candidate = recommendedCandidates[0]
+      }
+
+      candidate.recommended = true
+
+      if (this.size !== candidate.value) {
+        this.size = candidate.value
+      }
+    },
+    async save() {
+      this.saveDialog = true
+
+      await this.$refs.editor.save()
+    },
+    onSaveFinished() {
+      this.saveDialog = false
+    }
+  },
+  mounted() {
+    this.exportSizesForThisImage = window.deepCopy(this.exportSizes)
+  }
+}
+</script>
+
+<style>
+/*
+  Quasar animation bug fix
+  https://github.com/quasarframework/quasar/issues/13959
+*/
+body.desktop .q-focus-helper {
+  transition: none !important
+}
+
+body.desktop .q-focus-helper:before, body.desktop .q-focus-helper:after {
+  transition: none !important
+}
+</style>
+
+<style lang="stylus">
+#app {
+  overflow: hidden;
+}
+
+.backdrop-opacity-1 {
+  .q-dialog__backdrop {
+    background-color: #ddd !important;
+  }
+}
+
+.exported-image {
+  width: 100%;
+  max-height: 50%;
+}
+</style>

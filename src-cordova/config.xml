@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="app.sukashi" version="1.1.2" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>Sukashi</name>
+    <description>EXIF Watermark App</description>
+    <author email="m@milky.blue" href="https://milky.blue">
+        milky.blue
+    </author>
+    <!-- this hook will point your config.xml to the DevServer on Serve -->
+    <hook type="after_prepare" src="../node_modules/vue-cli-plugin-cordova/serve-config-hook.js" />
+    <content src="index.html" />
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+    <icon src="../public/icon.png" />
+
+    <platform name="android">
+        <resource-file src="res/values/colors.xml" target="/app/src/main/res/values/colors.xml" />
+        <preference name="android-targetSdkVersion" value="31" />
+        <preference name="android-minSdkVersion" value="26" />
+        <icon background="@color/background" density="mdpi" foreground="res/icon/android/mdpi.png" />
+        <icon background="@color/background" density="hdpi" foreground="res/icon/android/hdpi.png" />
+        <icon background="@color/background" density="xhdpi" foreground="res/icon/android/xhdpi.png" />
+        <icon background="@color/background" density="xxhdpi" foreground="res/icon/android/xxhdpi.png" />
+        <icon background="@color/background" density="xxxhdpi" foreground="res/icon/android/xxxhdpi.png" />
+    </platform>
+</widget>
