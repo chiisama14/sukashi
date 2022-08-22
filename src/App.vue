@@ -293,7 +293,7 @@
     <q-dialog v-model="modelPrompt" persistent @update:model-value="updateModel">
       <q-card style="min-width: 350px">
         <q-card-section>
-          <div class="text-h6">{{ $t('EDIT_MANUFACTURER_MODEL') }}</div>
+          <div class="text-h6">{{ $t('EDIT_MODEL_LABEL') }}</div>
         </q-card-section>
 
         <q-separator inset />
@@ -589,7 +589,8 @@ export default {
       aboutModal: false,
 
       //
-      exportSizesForThisImage: null
+      exportSizesForThisImage: null,
+      sizeManuallyChanged: false,
     }
   },
   watch: {
@@ -647,6 +648,7 @@ export default {
       }
 
       this.size = size
+      this.sizeManuallyChanged = true
     },
     setAdditional(additional) {
       if (this.additional === additional) {
@@ -666,6 +668,7 @@ export default {
     },
     onExifLoaded(exif) {
       this.exif = exif
+      this.sizeManuallyChanged = false
 
       const manufacturerSuggestion = window.localStorage[`suggestion/${this.exif.Make}/${this.exif.Model}/manufacturer`]
 
@@ -746,6 +749,10 @@ export default {
       //this.imgSrc = window.URL.createObjectURL(this.file)
     },
     suggestSize() {
+      if (this.sizeManuallyChanged) {
+        return
+      }
+
       const originalSize = this.$refs.editor.getOriginalSize()
 
       this.exportSizesForThisImage = window.deepCopy(this.exportSizes)
