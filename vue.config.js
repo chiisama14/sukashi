@@ -6,6 +6,10 @@ module.exports = defineConfig({
     'quasar'
   ],
 
+  devServer: {
+    https: false,
+  },
+
   pluginOptions: {
     quasar: {
       importStrategy: 'kebab',

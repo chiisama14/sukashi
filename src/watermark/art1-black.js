@@ -5,7 +5,7 @@ export default {
     height: 1.2,
     frames: [
       { width: 1.2, height: 0.1, top: 0 }, // 上
-      { width: 1.2, height: 0.25, bottom: 0 }, // 下
+      { width: 1.2, height: 0.25, top: 0.95 }, // 下
       { width: 0.1, height: 1, top: 0, left: 0 }, // 左
       { width: 0.1, height: 1, top: 0, right: 0 }, // 右
     ],
@@ -58,7 +58,7 @@ export default {
     height: 1.08,
     frames: [
       { width: 1.2, height: 0.1, top: 0 }, // 上
-      { width: 1.2, height: 0.25, bottom: 0 }, // 下
+      { width: 1.2, height: 0.25, top: 0.83 }, // 下
       { width: 0.1, height: 1, top: 0, left: 0 }, // 左
       { width: 0.1, height: 1, top: 0, right: 0 }, // 右
     ],

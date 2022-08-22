@@ -36,6 +36,7 @@
     "exif-js": "^2.3.0",
     "expr-eval": "^2.0.2",
     "html-to-image": "^1.9.0",
+    "html2canvas": "^1.4.1",
     "quasar": "^2.0.0",
     "vue": "^3.2.13",
     "vue-i18n": "^9.2.2"

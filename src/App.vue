@@ -134,33 +134,31 @@
               </q-item-section>
             </q-item>
 
-            <template v-if="!(isSafari || isIPhoneBrowser || isIPadBrowser)">
-              <q-item-label header>{{ $t('ADDITIONAL_WATERMARK_GUIDE_LABEL') }}</q-item-label>
-              <q-item tag="label" v-ripple @click="setupTwitterAccount">
-                <q-item-section avatar side>
-                  <q-icon v-if="additional === 'twitter'" color="primary" name="done" />
-                </q-item-section>
+            <q-item-label header>{{ $t('ADDITIONAL_WATERMARK_GUIDE_LABEL') }}</q-item-label>
+            <q-item tag="label" v-ripple @click="setupTwitterAccount">
+              <q-item-section avatar side>
+                <q-icon v-if="additional === 'twitter'" color="primary" name="done" />
+              </q-item-section>
 
-                <q-item-section>
-                  <q-item-label>{{ $t('TWITTER_WATERMARK_LABEL') }}</q-item-label>
-                  <q-item-label caption>
-                    {{ $t('TWITTER_WATERMARK_HINT') }}
-                  </q-item-label>
-                </q-item-section>
-              </q-item>
-              <q-item tag="label" v-ripple @click="setAdditional('sukashi')">
-                <q-item-section avatar side>
-                  <q-icon v-if="additional === 'sukashi'" color="primary" name="done" />
-                </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ $t('TWITTER_WATERMARK_LABEL') }}</q-item-label>
+                <q-item-label caption>
+                  {{ $t('TWITTER_WATERMARK_HINT') }}
+                </q-item-label>
+              </q-item-section>
+            </q-item>
+            <q-item tag="label" v-ripple @click="setAdditional('sukashi')">
+              <q-item-section avatar side>
+                <q-icon v-if="additional === 'sukashi'" color="primary" name="done" />
+              </q-item-section>
 
-                <q-item-section>
-                  <q-item-label>{{ $t('SUKASHI_WATERMARK_LABEL') }}</q-item-label>
-                  <q-item-label caption>
-                    {{ $t('SUKASHI_WATERMARK_HINT') }}
-                  </q-item-label>
-                </q-item-section>
-              </q-item>
-            </template>
+              <q-item-section>
+                <q-item-label>{{ $t('SUKASHI_WATERMARK_LABEL') }}</q-item-label>
+                <q-item-label caption>
+                  {{ $t('SUKASHI_WATERMARK_HINT') }}
+                </q-item-label>
+              </q-item-section>
+            </q-item>
 
             <q-item-label header>{{ $t('FONT_SELECT_GUIDE_LABEL') }}</q-item-label>
             <q-item v-for="(f, index) in fonts" :key="index" clickable v-ripple @click="selectFont(f.family)">
@@ -221,7 +219,7 @@
               </q-item-section>
             </q-item>
 
-            <q-item tag="label" v-ripple v-if="isAndroid">
+            <q-item tag="label" v-ripple v-if="isAndroidApp">
               <q-item-section side top>
                 <q-checkbox v-model="openShareSheetAfterSaving" />
               </q-item-section>
@@ -234,7 +232,7 @@
               </q-item-section>
             </q-item>
 
-            <q-item tag="label" v-ripple v-if="isAndroid">
+            <q-item tag="label" v-ripple v-if="isAndroidApp">
               <q-item-section side top>
                 <q-checkbox v-model="shareOnly" />
               </q-item-section>
@@ -247,7 +245,7 @@
               </q-item-section>
             </q-item>
 
-            <q-item tag="label" v-ripple v-if="isAndroid">
+            <q-item tag="label" v-ripple v-if="isAndroidApp">
               <q-item-section side top>
                 <q-checkbox v-model="supportDevelopmentByHashtag" />
               </q-item-section>
@@ -285,7 +283,7 @@
 
         <q-card-actions align="right" class="text-primary">
           <q-btn v-if="exif.Make" flat :label="$t('USE_SUGGESTED_BUTTON_LABEL')" @click="manufacturerOverride = exif.Make" v-close-popup />
-          <q-btn flat label="Close" v-close-popup />
+          <q-btn flat label="OK" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -308,7 +306,7 @@
 
         <q-card-actions align="right" class="text-primary">
           <q-btn v-if="exif.Model" flat :label="$t('USE_SUGGESTED_BUTTON_LABEL')" @click="modelOverride = exif.Model" v-close-popup />
-          <q-btn flat label="Close" v-close-popup />
+          <q-btn flat label="OK" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -336,7 +334,7 @@
         </q-card-section>
 
         <q-card-actions align="right" class="text-primary">
-          <q-btn flat label="Close" v-close-popup />
+          <q-btn flat label="OK" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -389,7 +387,7 @@
     </q-dialog>
 
     <q-dialog v-model="aboutModal">
-      <q-card>
+      <q-card style="max-height: 70vh">
         <q-card-section>
           <div class="text-h6">{{ $t('ABOUT_THIS_APP_HEADING') }}</div>
         </q-card-section>
@@ -409,7 +407,7 @@
             <template v-if="!(isIPhoneBrowser || isIPadBrowser)">
              | <a href="https://play.google.com/store/apps/details?id=app.sukashi" target="_blank">Android App</a>
             </template>
-            | <a href="#">iOS App (Coming Soon)</a>
+            | <a href="#">iOS App (Coming Soon!)</a>
           </div>
         </q-card-section>
 

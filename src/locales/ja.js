@@ -6,7 +6,7 @@ export default {
 
   //
   OPEN_IMAGE_GUIDE_TEXT: '"画像選択" ボタンから、EXIF データが含まれる画像を選択してください。',
-  IOS_NOT_SUPPORTED_TEXT: 'iPad / iPhone / Safari では、追加の透かし（Twitter 透かし / #SukashiApp の透かし）機能が動作しません。ご了承ください。',
+  IOS_NOT_SUPPORTED_TEXT: 'iPhone / iPad をご利用の方へ：HEIC フォーマットの画像はサポート外です（対応予定）。 ',
 
   //
   OPEN_IMAGE_BUTTON_LABEL: '画像選択',

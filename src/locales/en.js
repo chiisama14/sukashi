@@ -6,7 +6,7 @@ export default {
 
   //
   OPEN_IMAGE_GUIDE_TEXT: 'Please choose a image with EXIF data from "OPEN IMAGE" button',
-  IOS_NOT_SUPPORTED_TEXT: 'On iPad / iPhone / Safari, additional watermark (Twitter watermark / #SukashiApp\'s watermark) is not supported.',
+  IOS_NOT_SUPPORTED_TEXT: 'On iPhone or iPad devices, images in HEIC format is not supported for now and working on it.',
 
   //
   OPEN_IMAGE_BUTTON_LABEL: 'Open Image',

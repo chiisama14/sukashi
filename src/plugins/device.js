@@ -24,8 +24,11 @@ export default {
         isAndroidBrowser() {
           return this.platform === 'Browser' && /android/i.test(window.navigator.userAgent)
         },
-        isAndroid() {
-          return window.isAndroid()
+        isAndroidApp() {
+          return window.isAndroidApp()
+        },
+        isIOSApp() {
+          return window.isIOSApp()
         }
       }
     })

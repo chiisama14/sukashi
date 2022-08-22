@@ -24,7 +24,7 @@ createApp(App)
 
 document.addEventListener('deviceready', () => {
   // cordova
-  if (window.isAndroid()) {
+  if (window.isAndroidApp()) {
     document.querySelectorAll('a').forEach(el => {
       if (!((el.getAttribute('href') || '').startsWith('http'))) {
         return
@@ -44,10 +44,18 @@ window.isBrowser = () => {
   return !window.device
 }
 
-window.isAndroid = () => {
+window.isAndroidApp = () => {
   if (!window.device) {
     return false
   }
 
   return window.device.platform === 'Android'
+}
+
+window.isIOSApp = () => {
+  if (!window.device) {
+    return false
+  }
+
+  return window.device.platform === 'iOS'
 }

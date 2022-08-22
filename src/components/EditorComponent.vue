@@ -31,9 +31,10 @@ import * as describe from '../exif/describe'
 import watermark from '../watermark'
 
 //import * as htmlToImage from '../../../html-to-image/lib'
-import * as htmlToImage from 'html-to-image'
+//import * as htmlToImage from 'html-to-image'
+import html2canvas from 'html2canvas'
 
-const TO_RADIANS = Math.PI / 180
+//const TO_RADIANS = Math.PI / 180
 
 export default {
   name: 'EditorComponent',
@@ -343,8 +344,8 @@ export default {
     frameStyle(frame) {
       const ret = { }
 
-      ret.width = (this.imageWidth * (frame.width || 1)) + 'px'
-      ret.height = (this.imageHeight * (frame.height || 1)) + 'px'
+      ret.width = ((this.imageWidth * (frame.width || 1)) + 2) + 'px'
+      ret.height = ((this.imageHeight * (frame.height || 1)) + 2) + 'px'
       ret.backgroundColor = this.theme.frameColor || '#fff'
 
       if (frame.top !== undefined) {
@@ -433,27 +434,58 @@ export default {
     async save() {
       this.isProcessing = true
       const prevScale = this.scale
-      const exportScale = this.config.size / 100
+      //const exportScale = this.config.size / 100
 
       this.scale = 1
 
-      const canvas = await htmlToImage.toCanvas(this.$refs.preview, {
+      const canvas = await html2canvas(this.$refs.preview, {
+        width: this.editorWidth,
+        height: this.editorHeight,
+        windowWidth: this.editorWidth,
+        windowHeight: this.editorHeight,
+        scale: this.config.size / 100,
+        useCORS: true,
+        onclone: doc => {
+          console.log(doc, doc.querySelectorAll('.editor-content')[0].style)
+
+          const elm = doc.querySelectorAll('.editor-content')[0]
+
+          elm.style.margin = '0'
+          elm.style.transform = 'none'
+          elm.style.transformOrigin = ''
+
+          console.log('doc')
+          let elements = doc.querySelectorAll('.absolute')
+
+          for (const el of elements) {
+            console.log(el.offsetTop, el.offsetLeft, el)
+          }
+
+          elements = document.querySelectorAll('.absolute')
+
+          console.log('document')
+          for (const el of elements) {
+            console.log(el.offsetTop, el.offsetLeft, el)
+          }
+        }
+      })
+        /*await htmlToImage.toCanvas(this.$refs.preview, {
         width: this.editorWidth,
         height: this.editorHeight,
         canvasWidth: this.editorWidth * exportScale,
         canvasHeight: this.editorHeight * exportScale,
         pixelRatio: 1
-      })
+      })*/
 
-      canvas.style.transform = `scale(${exportScale})`
-      canvas.style.transformOrigin = 'top left'
+      //canvas.style.transform = `scale(${exportScale})`
+      //canvas.style.transformOrigin = 'top left'
       // canvas.style.width = this.editorWidth * exportScale
       // canvas.style.height = this.editorHeight * exportScale
       const mimeType = this.config.format === 'jpg' ? 'image/jpeg' : 'image/png'
       const now = new Date()
       const fileName = `sukashi_${now.getFullYear()}${('0' + (now.getMonth() + 1)).substr(-2)}${('0' + now.getDate()).substr(-2)}_${('0' + now.getHours()).substr(-2)}${('0' + now.getMinutes()).substr(-2)}${('0' + now.getSeconds()).substr(-2)}.${this.config.format}`
 
-      if (this.isAndroid) {
+      if (this.isAndroidApp) {
         canvas.toBlob(blob => {
           const tempFilePath = window.cordova.file.externalCacheDirectory + fileName
 
@@ -524,7 +556,8 @@ export default {
             }, this.handleExportError)
           }, this.handleExportError)
         }, mimeType, this.config.jpegQuality / 100)*/
-      } else if (this.isSafari || this.isIPadBrowser || this.isIPhoneBrowser) {
+      } else if (this.isSafari || this.isIPadBrowser || this.isIPhoneBrowser || this.isIOSApp) {
+        /*
         const newCanvas = document.createElement('canvas')
 
         newCanvas.width = canvas.width
@@ -542,7 +575,7 @@ export default {
         /*if (this.isIPadBrowser || this.isIPhoneBrowser) {
           translateX = this.$refs.draggableImage.offsetLeft + (this.x * (1 / this.scale) / (newCanvas.width / this.editorWidth))//this.x + this.imageWidth * (1 / imageScale)
           translateY = this.$refs.draggableImage.offsetTop + (this.y * (1 / this.scale) / (newCanvas.width / this.editorWidth))//this.y + this.imageHeight * (1 / imageScale)
-        } else {*/
+        } else {*
           translateX = this.x
           translateY = this.y
         //}
@@ -564,8 +597,9 @@ export default {
         context.restore()
         context.drawImage(canvas, 0, 0)
 
-        newCanvas.toBlob(function(blob) {
-          if (!(this.isIPadBrowser || this.isIPhoneBrowser)) {
+        newCanvas.toBlob(function(blob) {*/
+        canvas.toBlob(function(blob) {
+          if (!(this.isIPadBrowser || this.isIPhoneBrowser || this.isIOSApp)) {
             const link = document.createElement('a')
             const url = URL.createObjectURL(blob)
 
@@ -621,7 +655,7 @@ export default {
         return
       }
 
-      if (this.isAndroid) {
+      if (this.isAndroidApp) {
         window.plugins.socialsharing.shareWithOptions({
           message: this.config.supportDevelopmentByHashtag ? ' #SukashiApp' : '',
           files: [ path ]
@@ -645,7 +679,7 @@ export default {
   },
   mounted() {
     // interact
-    const interactive = interact('.interact').draggable({
+    interact('.interact').draggable({
       listeners: {
         move: this.dragMoveListener
       }
@@ -664,17 +698,13 @@ export default {
           ratio: 'preserve'
         }),
       ],
+    }).gesturable({
+      listeners: {
+        start: this.gestureStartListener,
+        move: this.gestureMoveListener,
+        end: this.gestureEndListener
+      }
     })
-    
-    if (this.isAndroid || this.isAndroidBrowser) {
-      interactive.gesturable({
-        listeners: {
-          start: this.gestureStartListener,
-          move: this.gestureMoveListener,
-          end: this.gestureEndListener
-        }
-      })
-    }
   }
 }
 </script>
