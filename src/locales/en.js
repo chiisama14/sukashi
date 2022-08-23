@@ -57,7 +57,7 @@ export default {
   TWITTER_ACCOUNT_SETTING_SCREEN_NAME_HINT: 'If you enter a screen name above, the input text will be sent to our server for the purpose of obtaining a profile icon.',
 
   //
-  WAITING_EXPORT_DIALOG_TEXT: 'Please wait... This may take few minutes.',
+  WAITING_EXPORT_DIALOG_TEXT: 'Please wait...',
   EXPORT_COMPLETED_HEADING: 'Export Completed!',
   EXPORT_COMPLETED_TEXT: 'To save, long-tap the image.',
 

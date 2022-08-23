@@ -57,7 +57,7 @@ export default {
   TWITTER_ACCOUNT_SETTING_SCREEN_NAME_HINT: 'スクリーンネームを入力した場合、アイコン画像を取得するため、入力値がサーバに送信されます。',
 
   //
-  WAITING_EXPORT_DIALOG_TEXT: '画像保存中です。数分かかることがあります。',
+  WAITING_EXPORT_DIALOG_TEXT: '画像保存中です。少々お待ちください。',
   EXPORT_COMPLETED_HEADING: '書き出しが完了しました！',
   EXPORT_COMPLETED_TEXT: '保存する場合、画像をロングタップしてください。',
 

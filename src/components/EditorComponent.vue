@@ -30,11 +30,7 @@ import * as describe from '../exif/describe'
 
 import watermark from '../watermark'
 
-//import * as htmlToImage from '../../../html-to-image/lib'
-//import * as htmlToImage from 'html-to-image'
 import html2canvas from 'html2canvas'
-
-//const TO_RADIANS = Math.PI / 180
 
 export default {
   name: 'EditorComponent',
@@ -469,19 +465,10 @@ export default {
           }
         }
       })
-        /*await htmlToImage.toCanvas(this.$refs.preview, {
-        width: this.editorWidth,
-        height: this.editorHeight,
-        canvasWidth: this.editorWidth * exportScale,
-        canvasHeight: this.editorHeight * exportScale,
-        pixelRatio: 1
-      })*/
 
-      //canvas.style.transform = `scale(${exportScale})`
-      //canvas.style.transformOrigin = 'top left'
-      // canvas.style.width = this.editorWidth * exportScale
-      // canvas.style.height = this.editorHeight * exportScale
       const mimeType = this.config.format === 'jpg' ? 'image/jpeg' : 'image/png'
+      const quality = this.config.jpegQuality / 100
+
       const now = new Date()
       const fileName = `sukashi_${now.getFullYear()}${('0' + (now.getMonth() + 1)).substr(-2)}${('0' + now.getDate()).substr(-2)}_${('0' + now.getHours()).substr(-2)}${('0' + now.getMinutes()).substr(-2)}${('0' + now.getSeconds()).substr(-2)}.${this.config.format}`
 
@@ -527,106 +514,17 @@ export default {
 
             }, this.handleExportError)
           }, this.handleExportError)
-        }, mimeType, this.config.jpegQuality / 100)
-/*        canvas.toBlob(blob => {
-          const tempFilePath = (window.cordova.file.externalCacheDirectory + fileName).replace('file:', '')
-
-          window.resolveLocalFileSystemURL(window.cordova.file.externalCacheDirectory, dirEntry => {
-            dirEntry.getFile(fileName, {
-              create: true,
-              exclusive: true
-            }, fileEntry => {
-              fileEntry.createWriter(writer => {
-                writer.onwriteend = () => {
-                  console.log(fileEntry.toURL())
-
-                  window.cordova.plugins.CordovaAndroidMediaStore.store(tempFilePath, mimeType, 'Pictures/sukashi', fileName, path => {
-                    console.log(path)
-
-                    this.scale = prevScale
-                    this.isProcessing = false
-                    this.shareAndroid(tempFilePath)
-                  }, this.handleExportError)
-                }
-
-                writer.onerror = this.handleExportError
-
-                writer.write(blob)
-              })
-            }, this.handleExportError)
-          }, this.handleExportError)
-        }, mimeType, this.config.jpegQuality / 100)*/
-      } else if (this.isSafari || this.isIPadBrowser || this.isIPhoneBrowser || this.isIOSApp) {
-        /*
-        const newCanvas = document.createElement('canvas')
-
-        newCanvas.width = canvas.width
-        newCanvas.height = canvas.height
-
-        const imageScale = this.currentWidth / this.imageWidth * this.gestureScale * (newCanvas.width / this.editorWidth)// width : height は一定なので、width, height どちらで計算しても同じになる
-
-        console.log(this.currentWidth, this.imageWidth, this.gestureScale, imageScale)
-
-        let translateX, translateY
-
-        // iPad, iPhone だと this.x, y がおかしい。。
-        // おそらく interact.js の gesturable をちゃんと実装できていないせい。
-        // 取り急ぎ、iPad, iPhone では gesturable を無効にする
-        /*if (this.isIPadBrowser || this.isIPhoneBrowser) {
-          translateX = this.$refs.draggableImage.offsetLeft + (this.x * (1 / this.scale) / (newCanvas.width / this.editorWidth))//this.x + this.imageWidth * (1 / imageScale)
-          translateY = this.$refs.draggableImage.offsetTop + (this.y * (1 / this.scale) / (newCanvas.width / this.editorWidth))//this.y + this.imageHeight * (1 / imageScale)
-        } else {*
-          translateX = this.x
-          translateY = this.y
-        //}
-
-        const dx = (this.theme.initialPoint.x * this.imageWidth + translateX) * (newCanvas.width / this.editorWidth)
-        const dy = (this.theme.initialPoint.y * this.imageHeight + translateY) * (newCanvas.height / this.editorHeight)
-
-        // console.log(this.angle, this.gestureScale)
-        // console.log(translateX, translateY)
-        // console.log(this.x, this.y, dx, dy)
-
-        const context = newCanvas.getContext('2d')
-
-        context.save()
-        context.scale(imageScale, imageScale)
-        context.translate(dx / imageScale, dy / imageScale)
-        context.rotate(this.angle * TO_RADIANS)
-        context.drawImage(this.$refs.image, 0, 0)//dx / imageScale, dy / imageScale)
-        context.restore()
-        context.drawImage(canvas, 0, 0)
-
-        newCanvas.toBlob(function(blob) {*/
+        }, mimeType, quality)
+      } else if (this.isIPadBrowser || this.isIPhoneBrowser || this.isIOSApp) {
         canvas.toBlob(function(blob) {
-          if (!(this.isIPadBrowser || this.isIPhoneBrowser || this.isIOSApp)) {
-            const link = document.createElement('a')
-            const url = URL.createObjectURL(blob)
+          // iOS Browser の a タグダウンロードが上手くいかないので、Blob URL を作成して表示する
+          const url = URL.createObjectURL(blob) // revoke は App.vue 側で行う
 
-            link.href = url
-            link.download = fileName
-            link.style.display = 'none'
+          this.scale = prevScale
+          this.isProcessing = false
 
-            document.body.appendChild(link)
-
-            link.click()
-
-            document.body.removeChild(link)
-            URL.revokeObjectURL(url)
-
-            this.scale = prevScale
-            this.isProcessing = false
-          } else {
-            // iOS Browser の a タグダウンロードが上手くいかないので、Blob URL を作成して表示する
-            const url = URL.createObjectURL(blob)
-
-            this.scale = prevScale
-            this.isProcessing = false
-
-            this.$emit('image-exported', url)
-          }
-
-        }.bind(this), this.config.format === 'jpg' ? 'image/jpeg' : 'image/png', this.config.jpegQuality / 100)
+          this.$emit('image-exported', url)
+        }.bind(this), mimeType, quality)
       } else {
         canvas.toBlob(function(blob) {
           { // "a" tag workaround
@@ -647,7 +545,7 @@ export default {
 
           this.scale = prevScale
           this.isProcessing = false
-        }.bind(this), this.config.format === 'jpg' ? 'image/jpeg' : 'image/png', this.config.jpegQuality / 100)
+        }.bind(this), mimeType, quality)
       }
     },
     share(path, force = false) {
