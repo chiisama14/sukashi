@@ -498,7 +498,7 @@
             <q-btn flat stack icon="restart_alt" @click="brightnessRaw = 100" :label="$t('RESET_TEXT')" style="width: 6rem;" />
           </div>
           <q-slider v-model="brightnessRaw" class="q-px-sm" :min="0" :max="200" />
-          <div class="text-weight-bold" style="width: 5rem; text-align: right;">{{ brightness }} %</div>
+          <div class="text-weight-bold" style="width: 5rem; text-align: right;">{{ brightnessRaw }} %</div>
         </q-card-section>
       </q-card>
     </q-dialog>
@@ -514,7 +514,7 @@
             <q-btn flat stack icon="restart_alt" @click="saturateRaw= 100" :label="$t('RESET_TEXT')" style="width: 6rem;" />
           </div>
           <q-slider v-model="saturateRaw" class="q-px-sm" :min="0" :max="200" />
-          <div class="text-weight-bold" style="width: 5rem; text-align: right;">{{ saturate }} %</div>
+          <div class="text-weight-bold" style="width: 5rem; text-align: right;">{{ saturateRaw }} %</div>
         </q-card-section>
       </q-card>
     </q-dialog>
@@ -546,7 +546,7 @@
             <q-btn flat stack icon="restart_alt" @click="grayscaleRaw = 0" :label="$t('RESET_TEXT')" style="width: 6rem;" />
           </div>
           <q-slider v-model="grayscaleRaw" class="q-px-sm" :min="0" :max="100" />
-          <div class="text-weight-bold" style="width: 5rem; text-align: right;">{{ grayscale }} %</div>
+          <div class="text-weight-bold" style="width: 5rem; text-align: right;">{{ grayscaleRaw }} %</div>
         </q-card-section>
       </q-card>
     </q-dialog>
@@ -562,7 +562,7 @@
             <q-btn flat stack icon="restart_alt" @click="sepiaRaw = 0" :label="$t('RESET_TEXT')" style="width: 6rem;" />
           </div>
           <q-slider v-model="sepiaRaw" class="q-px-sm" :min="0" :max="100" />
-          <div class="text-weight-bold" style="width: 5rem; text-align: right;">{{ sepia }} %</div>
+          <div class="text-weight-bold" style="width: 5rem; text-align: right;">{{ sepiaRaw }} %</div>
         </q-card-section>
       </q-card>
     </q-dialog>
@@ -828,7 +828,7 @@ export default {
     },
     updateFilterFn: debounce(function (key, value) {
       this[key] = value
-    }, 500),
+    }, 100),
     onImageExported(blobUrl) {
       this.blobUrl = blobUrl
       this.exportPrompt = true
