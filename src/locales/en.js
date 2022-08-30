@@ -69,4 +69,13 @@ export default {
   ENABLED_TEXT: 'Enabled',
   ORIGINAL_SIZE_TEXT: 'Original',
   RECOMMENDED_TEXT: 'Recommended',
+
+  //
+  BRIGHTNESS_TEXT: 'Brightness',
+  SATURATE_TEXT: 'Saturate',
+  CONTRAST_TEXT: 'Contrast',
+  GRAYSCALE_TEXT: 'Grayscale',
+  SEPIA_TEXT: 'Sepia',
+  FONT_SIZE_TEXT: 'Font Size',
+  RESET_TEXT: 'Reset',
 }

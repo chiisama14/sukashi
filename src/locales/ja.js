@@ -69,4 +69,13 @@ export default {
   ENABLED_TEXT: '有効',
   ORIGINAL_SIZE_TEXT: '原寸',
   RECOMMENDED_TEXT: '推奨',
+
+  //
+  BRIGHTNESS_TEXT: '明度',
+  SATURATE_TEXT: '彩度',
+  CONTRAST_TEXT: 'コントラスト',
+  GRAYSCALE_TEXT: 'グレースケール',
+  SEPIA_TEXT: 'セピア',
+  FONT_SIZE_TEXT: 'フォントサイズ',
+  RESET_TEXT: 'リセット',
 }

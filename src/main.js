@@ -22,8 +22,9 @@ createApp(App)
   .use(device)
   .mount('#app')
 
+// cordova
 document.addEventListener('deviceready', () => {
-  // cordova
+  // modify link behavior
   if (window.isAndroidApp()) {
     document.querySelectorAll('a').forEach(el => {
       if (!((el.getAttribute('href') || '').startsWith('http'))) {
@@ -35,11 +36,35 @@ document.addEventListener('deviceready', () => {
         e.preventDefault()
       })
     })
+  } else {
+    // TODO: for iOS, need another handling
+    // https://stackoverflow.com/questions/17887348/phonegap-open-link-in-browser
   }
 
-  // for iOS, need another handling
-  // https://stackoverflow.com/questions/17887348/phonegap-open-link-in-browser
+  // share with
+  window.cordova.openwith.init()
+
+  window.cordova.openwith.addHandler(intent => {
+    if (intent.items.length === 1) {
+      window.cordova.openwith.load(intent.items[0], data => {
+        window.dispatchEvent(new CustomEvent('intent', {
+          detail: {
+            data
+          }
+        }))
+
+        if (intent.exit) {
+          window.cordova.openwith.exit()
+        }
+      }, )
+    } else {
+      if (intent.exit) {
+        window.cordova.openwith.exit()
+      }
+    }
+  })
 }, false)
+
 window.isBrowser = () => {
   return !window.device
 }

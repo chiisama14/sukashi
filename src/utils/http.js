@@ -7,7 +7,7 @@ export default async (url, method, data, options = { }) => {
     window.cordova.plugin.http.setHeader('origin', 'https://milky.blue')
 
     const res = await promisify(window.cordova.plugin.http[method])(url, data, options)
-console.log(res, JSON.parse(res.data))
+
     return JSON.parse(res.data)
   } else {
     const res = await axios[method](url, data)

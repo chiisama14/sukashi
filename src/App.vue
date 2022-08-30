@@ -92,6 +92,61 @@
               </q-item-section>
             </q-item>
 
+            <q-item clickable v-ripple @click="brightnessModal = true">
+              <q-item-section avatar side>
+                <q-icon name="brightness_medium" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ $t('BRIGHTNESS_TEXT') }}</q-item-label>
+              </q-item-section>
+            </q-item>
+
+            <q-item clickable v-ripple @click="saturateModal = true">
+              <q-item-section avatar side>
+                <q-icon name="local_florist" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ $t('SATURATE_TEXT') }}</q-item-label>
+              </q-item-section>
+            </q-item>
+
+            <q-item clickable v-ripple @click="contrastModal = true">
+              <q-item-section avatar side>
+                <q-icon name="contrast" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ $t('CONTRAST_TEXT') }}</q-item-label>
+              </q-item-section>
+            </q-item>
+
+            <q-item clickable v-ripple @click="grayscaleModal = true">
+              <q-item-section avatar side>
+                <q-icon name="filter_b_and_w" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ $t('GRAYSCALE_TEXT') }}</q-item-label>
+              </q-item-section>
+            </q-item>
+
+            <q-item clickable v-ripple @click="sepiaModal = true">
+              <q-item-section avatar side>
+                <q-icon name="cake" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ $t('SEPIA_TEXT') }}</q-item-label>
+              </q-item-section>
+            </q-item>
+
+            <q-item clickable v-ripple @click="fontSizeModal = true">
+              <q-item-section avatar side>
+                <q-icon name="format_size" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ $t('FONT_SIZE_TEXT') }}</q-item-label>
+              </q-item-section>
+            </q-item>
+
+
             <q-item-label header>EXIF</q-item-label>
             <q-item tag="label" v-ripple>
               <q-item-section side top>
@@ -199,7 +254,7 @@
             </q-item>
 
             <q-item-label header>{{ $t('SELECT_SIZE_GUIDE_LABEL') }}</q-item-label>
-            <q-item v-for="(s, index) in exportSizesForThisImage" :key="index" clickable v-ripple @click="selectSize(s.value, s.disabled)" :disabled="s.disabled">
+            <q-item v-for="(s, index) in exportSizesForThisImage" :key="index" clickable v-ripple @click="selectSize(s.value, s.disabled)" :disable="s.disabled">
               <q-item-section avatar side>
                 <q-icon v-if="size === s.value" color="primary" name="done" />
               </q-item-section>
@@ -219,9 +274,9 @@
               </q-item-section>
             </q-item>
 
-            <q-item tag="label" v-ripple v-if="isAndroidApp">
+            <q-item tag="label" v-ripple v-if="isAndroidApp" :disable="shareOnly">
               <q-item-section side top>
-                <q-checkbox v-model="openShareSheetAfterSaving" />
+                <q-checkbox v-model="openShareSheetAfterSaving" :disable="shareOnly" />
               </q-item-section>
 
               <q-item-section>
@@ -232,9 +287,9 @@
               </q-item-section>
             </q-item>
 
-            <q-item tag="label" v-ripple v-if="isAndroidApp">
+            <q-item tag="label" v-ripple v-if="isAndroidApp" :disable="!openShareSheetAfterSaving">
               <q-item-section side top>
-                <q-checkbox v-model="shareOnly" />
+                <q-checkbox v-model="shareOnly" :disable="!openShareSheetAfterSaving" />
               </q-item-section>
 
               <q-item-section>
@@ -403,11 +458,7 @@
             Powered by <a href="https://vuejs.org/" target="_blank">Vue</a>, <a href="https://quasar.dev/" target="_blank">Quasar</a> and <a href="https://cordova.apache.org/" target="_blank">Cordova</a> for Native App
             <br>
             <br>
-            <a href="https://milky.blue/sukashi" target="_blank">Web App</a>
-            <template v-if="!(isIPhoneBrowser || isIPadBrowser)">
-             | <a href="https://play.google.com/store/apps/details?id=app.sukashi" target="_blank">Android App</a>
-            </template>
-            | <a href="#">iOS App (Coming Soon!)</a>
+            <a href="https://milky.blue/sukashi" target="_blank">Web App</a> | <a href="https://play.google.com/store/apps/details?id=app.sukashi" target="_blank">Android App</a>
           </div>
         </q-card-section>
 
@@ -436,6 +487,101 @@
       </q-card>
     </q-dialog>
 
+    <q-dialog v-model="brightnessModal" position="bottom" class="backdrop-opacity-0">
+      <q-card style="width: 100%">
+        <q-card-section class="text-subtitle1 text-weight-bold">
+          <q-icon name="brightness_medium" size="md" class="q-mr-sm" />
+          {{ $t('BRIGHTNESS_TEXT') }}
+        </q-card-section>
+        <q-card-section class="row items-center no-wrap">
+          <div class="q-mr-sm">
+            <q-btn flat stack icon="restart_alt" @click="brightnessRaw = 100" :label="$t('RESET_TEXT')" style="width: 6rem;" />
+          </div>
+          <q-slider v-model="brightnessRaw" class="q-px-sm" :min="0" :max="200" />
+          <div class="text-weight-bold" style="width: 5rem; text-align: right;">{{ brightness }} %</div>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="saturateModal" position="bottom" class="backdrop-opacity-0">
+      <q-card style="width: 100%">
+        <q-card-section class="text-subtitle1 text-weight-bold">
+          <q-icon name="local_florist" size="md" class="q-mr-sm" />
+          {{ $t('SATURATE_TEXT') }}
+        </q-card-section>
+        <q-card-section class="row items-center no-wrap">
+          <div class="q-mr-sm">
+            <q-btn flat stack icon="restart_alt" @click="saturateRaw= 100" :label="$t('RESET_TEXT')" style="width: 6rem;" />
+          </div>
+          <q-slider v-model="saturateRaw" class="q-px-sm" :min="0" :max="200" />
+          <div class="text-weight-bold" style="width: 5rem; text-align: right;">{{ saturate }} %</div>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="contrastModal" position="bottom" class="backdrop-opacity-0">
+      <q-card style="width: 100%">
+        <q-card-section class="text-subtitle1 text-weight-bold">
+          <q-icon name="contrast" size="md" class="q-mr-sm" />
+          {{ $t('CONTRAST_TEXT') }}
+        </q-card-section>
+        <q-card-section class="row items-center no-wrap">
+          <div class="q-mr-sm">
+            <q-btn flat stack icon="restart_alt" @click="contrastRaw = 100" :label="$t('RESET_TEXT')" style="width: 6rem;" />
+          </div>
+          <q-slider v-model="contrastRaw" class="q-px-sm" :min="0" :max="200" />
+          <div class="text-weight-bold" style="width: 5rem; text-align: right;">{{ contrastRaw }} %</div>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="grayscaleModal" position="bottom" class="backdrop-opacity-0">
+      <q-card style="width: 100%">
+        <q-card-section class="text-subtitle1 text-weight-bold">
+          <q-icon name="filter_b_and_w" size="md" class="q-mr-sm" />
+          {{ $t('GRAYSCALE_TEXT') }}
+        </q-card-section>
+        <q-card-section class="row items-center no-wrap">
+          <div class="q-mr-sm">
+            <q-btn flat stack icon="restart_alt" @click="grayscaleRaw = 0" :label="$t('RESET_TEXT')" style="width: 6rem;" />
+          </div>
+          <q-slider v-model="grayscaleRaw" class="q-px-sm" :min="0" :max="100" />
+          <div class="text-weight-bold" style="width: 5rem; text-align: right;">{{ grayscale }} %</div>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="sepiaModal" position="bottom" class="backdrop-opacity-0">
+      <q-card style="width: 100%">
+        <q-card-section class="text-subtitle1 text-weight-bold">
+          <q-icon name="cake" size="md" class="q-mr-sm" />
+          {{ $t('SEPIA_TEXT') }}
+        </q-card-section>
+        <q-card-section class="row items-center no-wrap">
+          <div class="q-mr-sm">
+            <q-btn flat stack icon="restart_alt" @click="sepiaRaw = 0" :label="$t('RESET_TEXT')" style="width: 6rem;" />
+          </div>
+          <q-slider v-model="sepiaRaw" class="q-px-sm" :min="0" :max="100" />
+          <div class="text-weight-bold" style="width: 5rem; text-align: right;">{{ sepia }} %</div>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="fontSizeModal" position="bottom" class="backdrop-opacity-0">
+      <q-card style="width: 100%">
+        <q-card-section class="text-subtitle1 text-weight-bold">
+          {{ $t('FONT_SIZE_TEXT') }}
+        </q-card-section>
+        <q-card-section class="row items-center no-wrap">
+          <q-btn flat round icon="text_decrease" @click="fontSize -= 5" class="q-mr-sm" />
+          <q-space />
+          <div class="text-weight-bold" style="text-align: center;">{{ fontSize }} %</div>
+          <q-space />
+          <q-btn flat round icon="text_increase" @click="fontSize += 5" class="q-mr-sm" />
+        </q-card-section>
+      </q-card>
+    </q-dialog>   
+
   </q-layout>
 </template>
 
@@ -443,14 +589,10 @@
 import canvasSize from 'canvas-size'
 
 import watermark from './watermark'
+import { licenses, fontFamily } from './resources/fonts'
 
 import EditorComponent from './components/EditorComponent.vue'
-
-const licenses = {
-  OFL11: `This Font Software is licensed under the SIL Open Font License, Version 1.1.
-This license is copied below, and is also available with a FAQ at:
-http://scripts.sil.org/OFL`
-}
+import { debounce } from 'quasar'
 
 export default {
   name: 'LayoutDefault',
@@ -466,48 +608,7 @@ export default {
       return licenses
     },
     fonts() {
-      return [ {
-        family: 'Lato',
-        license: 'Copyright (c) 2010-2014 by tyPoland Lukasz Dziedzic (team@latofonts.com) with Reserved Font Name "Lato"',
-        type: 'OFL11'
-      }, {
-        family: 'PT Sans Narrow',
-        license: 'Copyright (c) 2010, ParaType Ltd. (http://www.paratype.com/public), with Reserved Font Names "PT Sans" and "ParaType".',
-        type: 'OFL11'
-      }, {
-        family: 'Zilla Slab',
-        license: 'Copyright 2017, The Mozilla Foundation',
-        type: 'OFL11'
-      }, {
-        family: 'Source Serif Pro',
-        license: 'Copyright 2014 Adobe Systems Incorporated (http://www.adobe.com/), with Reserved Font Name \'Source\'. All Rights Reserved. Source is a trademark of Adobe Systems Incorporated in the United States and/or other countries.',
-        type: 'OFL11'
-      }, {
-        family: 'EB Garamond',
-        license: 'Copyright 2017 The EB Garamond Project Authors (https://github.com/octaviopardo/EBGaramond12)',
-        type: 'OFL11'
-      }, {
-        family: 'Ibarra Real Nova',
-        license: 'Copyright 2007 The Ibarra Real Nova Project Authors (https://github.com/googlefonts/ibarrareal)',
-        type: 'OFL11'
-      }, {
-        family: 'Cardo',
-        license: 'Copyright (c) 2002-2011, David J. Perry (hospes02@scholarsfonts.net)',
-        type: 'OFL11'
-      }, {
-        family: 'Gentium Book Plus',
-        license: 'Copyright (c) 2003-2022 SIL International (http://www.sil.org/), with Reserved Font Names "Gentium" and "SIL".',
-        type: 'OFL11'
-      }, {
-        family: 'Literata',
-        license: 'Copyright 2017 The Literata Project Authors (https://github.com/googlefonts/literata)',
-        type: 'OFL11'
-      }, {
-        family: 'Kanit',
-        example: 'vivo-like',
-        license: 'Copyright 2020 The Kanit Project Authors (https://github.com/cadsondemak/kanit)',
-        type: 'OFL11'
-      } ]
+      return fontFamily
     },
     formats() {
       return [ {
@@ -546,7 +647,14 @@ export default {
         additional: this.additional,
         supportDevelopmentByHashtag: this.supportDevelopmentByHashtag,
         shareOnly: this.shareOnly,
-        twitterAccount: this.twitterPrompt ? '' : this.twitterAccount // prompt が開いている間も送ってしまうと、一文字変更ごとにイベントが発生して相手のサーバに迷惑をかけてしまうので
+        twitterAccount: this.twitterPrompt ? '' : this.twitterAccount, // prompt が開いている間も送ってしまうと、一文字変更ごとにイベントが発生してサーバ代がかかるので
+
+        brightness: this.brightness,
+        saturate: this.saturate,
+        contrast: this.contrast,
+        grayscale: this.grayscale,
+        sepia: this.sepia,
+        fontSize: this.fontSize,
       }
     }
   },
@@ -571,6 +679,18 @@ export default {
 
       // model
       isTwitterAccountWatermarkEnabled: false,
+      brightnessRaw: 100,
+      saturateRaw: 100,
+      contrastRaw: 100,
+      grayscaleRaw: 0,
+      sepiaRaw: 0,
+      fontSize: 100,
+
+      brightness: 100,
+      saturate: 100,
+      contrast: 100,
+      grayscale: 0,
+      sepia: 0,
 
       //
       imgSrc: null,
@@ -585,6 +705,12 @@ export default {
       exif: null,
       saveDialog: false,
       aboutModal: false,
+      brightnessModal: false,
+      saturateModal: false,
+      contrastModal: false,
+      grayscaleModal: false,
+      sepiaModal: false,
+      fontSizeModal: false,
 
       //
       exportSizesForThisImage: null,
@@ -601,10 +727,18 @@ export default {
     jpegQuality() {
       window.localStorage['jpegQuality'] = this.jpegQuality
     },
-    openShareSheetAfterSaving() {
+    openShareSheetAfterSaving(newValue) {
+      if (!newValue) {
+        this.shareOnly = false
+      }
+
       window.localStorage['openShareSheetAfterSaving'] = this.openShareSheetAfterSaving
     },
-    shareOnly() {
+    shareOnly(newValue) {
+      if (newValue) {
+        this.openShareSheetAfterSaving = true
+      }
+
       window.localStorage['shareOnly'] = this.shareOnly
     },
     supportDevelopmentByHashtag() {
@@ -614,9 +748,15 @@ export default {
       if (!newValue) {
         if (this.blobUrl) {
           URL.revokeObjectURL(this.blobUrl)
+          this.blobUrl = null
         }
       }
-    }
+    },
+    brightnessRaw(newValue) { this.updateFilterFn.bind(this)('brightness', newValue) },
+    saturateRaw(newValue) { this.updateFilterFn.bind(this)('saturate', newValue) },
+    contrastRaw(newValue) { this.updateFilterFn.bind(this)('contrast', newValue) },
+    grayscaleRaw(newValue) { this.updateFilterFn.bind(this)('grayscale', newValue) },
+    sepiaRaw(newValue) { this.updateFilterFn.bind(this)('sepia', newValue) },
   },
   methods: {
     styleFn(offset) {
@@ -686,6 +826,9 @@ export default {
       this.imgSrc = null
       this.noExifAlert = true
     },
+    updateFilterFn: debounce(function (key, value) {
+      this[key] = value
+    }, 500),
     onImageExported(blobUrl) {
       this.blobUrl = blobUrl
       this.exportPrompt = true
@@ -803,10 +946,25 @@ export default {
     },
     onSaveFinished() {
       this.saveDialog = false
+    },
+    onIntentReceived({ detail }) {
+      this.imgSrc = 'data:image/jpeg;base64,' + detail.data
     }
   },
   mounted() {
+    // migration
+    if (!this.openShareSheetAfterSaving && this.shareOnly) {
+      // 本来設定できないパターン
+      this.openShareSheetAfterSaving = false
+      this.shareOnly = false
+    }
+
     this.exportSizesForThisImage = window.deepCopy(this.exportSizes)
+
+    window.addEventListener('intent', this.onIntentReceived)
+  },
+  unmounted() {
+    window.removeEventListener('intent', this.onIntentReceived)
   }
 }
 </script>
@@ -833,6 +991,12 @@ body.desktop .q-focus-helper:before, body.desktop .q-focus-helper:after {
 .backdrop-opacity-1 {
   .q-dialog__backdrop {
     background-color: #ddd !important;
+  }
+}
+
+.backdrop-opacity-0 {
+  .q-dialog__backdrop {
+    background-color: rgba(0, 0, 0, 0) !important;
   }
 }
 

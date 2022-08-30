@@ -4,7 +4,7 @@
     <img src="../../public/icon.png" :style="{ display: 'none' }" ref="logo" />
     <template v-if="exif">
       <div class="editor-content" ref="preview" :style="[ contentMargin, { transform: `scale(${scale})`, transformOrigin: 'top left', width: `${editorWidth}px`, height: `${editorHeight}px`, fontFamily: config.fontName } ]">
-        <img :src="imgSrc" ref="draggableImage" class="interact absolute" :style="[ initialPointStyle, interactStyle ]" />
+        <img :src="imgSrc" ref="draggableImage" class="interact absolute" :style="[ initialPointStyle, interactStyle, imgFilter ]" />
         <!--<canvas ref="canvas" class="interact absolute" :style="[ initialPointStyle, interactStyle ]" />-->
         <div class="frame absolute" v-for="(frame, index) in theme.frames" :key="index" :style="frameStyle(frame)" />
         <div class="info absolute" v-for="(info, index) in theme.information" :key="index" :style="informationStyle(info)" v-html="getInfo(info.type)" />
@@ -30,7 +30,7 @@ import * as describe from '../exif/describe'
 
 import watermark from '../watermark'
 
-import html2canvas from 'html2canvas'
+import html2canvas from '../../../html2canvas'
 
 export default {
   name: 'EditorComponent',
@@ -93,6 +93,34 @@ export default {
       const mode = this.imageWidth >= this.imageHeight ? 'landscape' : 'portrait'
 
       return watermark[this.config.themeName][mode] || watermark[this.config.themeName]
+    },
+    imgFilter() {
+      const filters = [ ]
+
+      if (this.config.brightness !== 100) {
+        filters.push(`brightness(${this.config.brightness}%)`)
+      }
+
+      if (this.config.saturate !== 100) {
+        filters.push(`saturate(${this.config.saturate}%)`)
+      }
+
+      if (this.config.contrast !== 100) {
+        filters.push(`contrast(${this.config.contrast}%)`)
+      }
+
+      if (this.config.grayscale !== 0) {
+        filters.push(`grayscale(${this.config.grayscale}%)`)
+      }
+
+      if (this.config.sepia !== 0) {
+        filters.push(`sepia(${this.config.sepia}%)`)
+      }
+
+
+      return {
+        'filter': filters.join(' ')
+      }
     },
     focalLength() {
       if (!this.exif) {
@@ -401,9 +429,9 @@ export default {
 
       ret.fontSize = (() => {
         if (typeof info.size === 'number') {
-          return this.baseFontSize * (info.size || 1) + 'px'
+          return `calc(${this.baseFontSize * (info.size || 1) + 'px'} * ${this.config.fontSize / 100})`
         } else {
-          return this.interpretSize(info.size)
+          return `calc(${this.interpretSize(info.size)} * ${this.config.fontSize / 100})`
         }
       })()
 
@@ -430,7 +458,6 @@ export default {
     async save() {
       this.isProcessing = true
       const prevScale = this.scale
-      //const exportScale = this.config.size / 100
 
       this.scale = 1
 
@@ -442,27 +469,11 @@ export default {
         scale: this.config.size / 100,
         useCORS: true,
         onclone: doc => {
-          console.log(doc, doc.querySelectorAll('.editor-content')[0].style)
-
           const elm = doc.querySelectorAll('.editor-content')[0]
 
           elm.style.margin = '0'
           elm.style.transform = 'none'
           elm.style.transformOrigin = ''
-
-          console.log('doc')
-          let elements = doc.querySelectorAll('.absolute')
-
-          for (const el of elements) {
-            console.log(el.offsetTop, el.offsetLeft, el)
-          }
-
-          elements = document.querySelectorAll('.absolute')
-
-          console.log('document')
-          for (const el of elements) {
-            console.log(el.offsetTop, el.offsetLeft, el)
-          }
         }
       })
 
@@ -515,16 +526,58 @@ export default {
             }, this.handleExportError)
           }, this.handleExportError)
         }, mimeType, quality)
-      } else if (this.isIPadBrowser || this.isIPhoneBrowser || this.isIOSApp) {
-        canvas.toBlob(function(blob) {
+      /*} else if (this.isIOSApp) {
+        canvas.toBlob(blob => {
+          const tempFilePath = window.cordova.file.dataDirectory + fileName
+
+          window.resolveLocalFileSystemURL(window.cordova.file.dataDirectory, dirEntry => {
+            dirEntry.getFile(fileName, {
+              create: true,
+              exclusive: true
+            }, fileEntry => {
+              fileEntry.createWriter(writer => {
+                const reader = blob.stream().getReader()
+
+                const processReader = ({ done, value }) => {
+                  if (done) {
+                    if (this.config.shareOnly) {
+                      this.scale = prevScale
+                      this.isProcessing = false
+                      this.share(tempFilePath)
+                    } else {
+                      window.DownloadImageToGallery.downloadWithLocalPath('/' + fileName, () =>{
+                        this.scale = prevScale
+                        this.isProcessing = false
+                        this.share(tempFilePath)
+                      }, this.handleExportError)
+                    }
+
+                    return
+                  }
+
+                  writer.onwriteend = () => reader.read().then(processReader)
+
+                  writer.seek(writer.length)
+                  writer.write(new Blob([ value.buffer ]))
+                }
+
+                reader.read().then(processReader)
+              })
+
+            }, this.handleExportError)
+          }, this.handleExportError)
+        }, mimeType, quality)
+      */
+      } else if (this.isIPadBrowser || this.isIPhoneBrowser) {
+        canvas.toDataURL(url => {
           // iOS Browser の a タグダウンロードが上手くいかないので、Blob URL を作成して表示する
-          const url = URL.createObjectURL(blob) // revoke は App.vue 側で行う
+          //const url = URL.createObjectURL(blob) // revoke は App.vue 側で行う
 
           this.scale = prevScale
           this.isProcessing = false
 
           this.$emit('image-exported', url)
-        }.bind(this), mimeType, quality)
+        }, mimeType, quality)
       } else {
         canvas.toBlob(function(blob) {
           { // "a" tag workaround
@@ -553,7 +606,7 @@ export default {
         return
       }
 
-      if (this.isAndroidApp) {
+      if (this.isAndroidApp || this.isIOSApp) {
         window.plugins.socialsharing.shareWithOptions({
           message: this.config.supportDevelopmentByHashtag ? ' #SukashiApp' : '',
           files: [ path ]

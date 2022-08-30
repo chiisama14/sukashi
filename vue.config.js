@@ -7,7 +7,7 @@ module.exports = defineConfig({
   ],
 
   devServer: {
-    https: false,
+    //https: false,
   },
 
   pluginOptions: {
