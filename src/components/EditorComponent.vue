@@ -3,7 +3,7 @@
     <img v-if="imgSrc" :src="imgSrc" ref="image" @load="loadExif" :style="{ display: 'none' }" />
     <img src="../../public/icon.png" :style="{ display: 'none' }" ref="logo" />
     <template v-if="exif">
-      <div class="editor-content" ref="preview" :style="[ contentMargin, { transform: `scale(${scale})`, transformOrigin: 'top left', width: `${editorWidth}px`, height: `${editorHeight}px`, fontFamily: config.fontName } ]">
+      <div class="editor-content" ref="preview" :style="[ contentMargin, { transform: `scale(${scale})`, transformOrigin: 'top left', width: `${editorWidth}px`, height: `${editorHeight}px`, fontFamily: `'${config.fontName}'` } ]">
         <img :src="imgSrc" ref="draggableImage" class="interact absolute" :style="[ initialPointStyle, interactStyle, imgFilter ]" />
         <!--<canvas ref="canvas" class="interact absolute" :style="[ initialPointStyle, interactStyle ]" />-->
         <div class="frame absolute" v-for="(frame, index) in theme.frames" :key="index" :style="frameStyle(frame)" />

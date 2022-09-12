@@ -221,8 +221,8 @@
                 <q-icon v-if="font === f.family" color="primary" name="done" />
               </q-item-section>
               <q-item-section>
-                <q-item-label :style="{ fontFamily: f.family }">{{ f.family }}</q-item-label>
-                <q-item-label caption v-if="f.example" :style="{ fontFamily: f.family }">{{ f.example }}</q-item-label>
+                <q-item-label :style="{ fontFamily: `'${f.family}'` }">{{ f.family }}</q-item-label>
+                <q-item-label caption v-if="f.example" :style="{ fontFamily: `'${f.family}'` }">{{ f.example }}</q-item-label>
               </q-item-section>
             </q-item>
           </q-list>
@@ -423,7 +423,6 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
-
 
     <q-dialog v-model="noExifAlert">
       <q-card>

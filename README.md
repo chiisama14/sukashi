@@ -3,6 +3,7 @@
 ## Project setup
 ```
 npm install
+node download.js # downloads font from Google Fonts
 ```
 
 ### Compiles and hot-reloads for development

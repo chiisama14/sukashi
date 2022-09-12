@@ -13,6 +13,10 @@ export const fontFamily = [ {
   license: 'Copyright (c) 2010, ParaType Ltd. (http://www.paratype.com/public), with Reserved Font Names "PT Sans" and "ParaType".',
   type: 'OFL11'
 }, {
+  family: 'Montserrat',
+  license: 'Copyright 2011 The Montserrat Project Authors (https://github.com/JulietaUla/Montserrat)',
+  type: 'OFL11'
+}, {
   family: 'Zilla Slab',
   license: 'Copyright 2017, The Mozilla Foundation',
   type: 'OFL11'
@@ -44,5 +48,10 @@ export const fontFamily = [ {
   family: 'Kanit',
   example: 'vivo-like',
   license: 'Copyright 2020 The Kanit Project Authors (https://github.com/cadsondemak/kanit)',
+  type: 'OFL11'
+}, {
+  family: 'F5.6',
+  example: 'LEICA-like',
+  license: 'Copyright (c) 2018, Sora Sagano (sagano@dotcolon.net)',
   type: 'OFL11'
 } ]
