@@ -46,7 +46,7 @@
 
     <q-page-container>
       <q-page :style-fn="styleFn">
-        <EditorComponent v-if="imgSrc" :key="imgSrc.substring(0, 100)" :imgSrc="imgSrc" :config="editorConfig" ref="editor" @exif-loaded="onExifLoaded" @exif-not-found="onExifNotFound" @image-exported="onImageExported" @save-finished="onSaveFinished" @editor-size-changed="suggestSize" />
+        <EditorComponent v-if="imgSrc" :key="imgSrc.substring(0, 100)" :imgSrc="imgSrc" :exif="exif" :config="editorConfig" ref="editor" @image-loaded="suggestSize" @image-exported="onImageExported" @save-finished="onSaveFinished" @editor-size-changed="suggestSize" />
         <div v-else :style="{ height: '100%', paddingTop: '35vh', paddingLeft: '10vw', paddingRight: '10vw', textAlign: 'center' }">
           {{ $t('OPEN_IMAGE_GUIDE_TEXT') }}
           <template v-if="isSafari || isIPhoneBrowser || isIPadBrowser">
@@ -318,7 +318,7 @@
       </q-toolbar>
     </q-footer>
 
-    <q-file v-show="false" v-model="file" ref="file" accept="image/jpeg" max-files="1" @update:model-value="fileUpdate" />
+    <q-file v-show="false" v-model="file" ref="file" accept="image/jpeg,image/jpg,image/heif,image/heic,image/heif-sequence,image/heic-sequence,.jpg,.jpeg,.heic,.heif" max-files="1" @update:model-value="fileUpdate" />
 
     <q-dialog v-model="manufacturerPrompt" persistent @update:model-value="updateManufacturer">
       <q-card style="min-width: 350px">
@@ -586,6 +586,8 @@
 
 <script>
 import canvasSize from 'canvas-size'
+import heic2any from 'heic2any'
+import exifr from 'exifr'
 
 import watermark from './watermark'
 import { licenses, fontFamily } from './resources/fonts'
@@ -692,6 +694,7 @@ export default {
       sepia: 0,
 
       //
+      exif: null,
       imgSrc: null,
       blobUrl: null,
 
@@ -701,7 +704,6 @@ export default {
       twitterPrompt: false,
       exportPrompt: false,
       noExifAlert: false,
-      exif: null,
       saveDialog: false,
       aboutModal: false,
       brightnessModal: false,
@@ -803,10 +805,7 @@ export default {
     returnToOriginalPosition() {
       this.$refs.editor.returnToOriginalPosition()
     },
-    onExifLoaded(exif) {
-      this.exif = exif
-      this.sizeManuallyChanged = false
-
+    suggestManufacturerAndModel() {
       const manufacturerSuggestion = window.localStorage[`suggestion/${this.exif.Make}/${this.exif.Model}/manufacturer`]
 
       if (manufacturerSuggestion) {
@@ -818,12 +817,6 @@ export default {
       if (modelSuggestion) {
         this.$refs.editor.setModel(modelSuggestion)
       }
-
-      this.suggestSize()
-    },
-    onExifNotFound() {
-      this.imgSrc = null
-      this.noExifAlert = true
     },
     updateFilterFn: debounce(function (key, value) {
       this[key] = value
@@ -878,14 +871,41 @@ export default {
       window.localStorage['additional'] = this.additional
       window.localStorage['twitterAccount'] = this.twitterAccount
     },
-    fileUpdate() {
-      const reader = new FileReader()
+    async fileUpdate() {
+      this.exif = await exifr.parse(this.file)
+      console.log('exifr', this.exif)
 
-      reader.onload = (e) => {
-        this.imgSrc = e.target.result
+      const hasExif = this.exif ? (this.exif.Make || this.exif.Model || this.exif.ModifyDate || this.exif.DateTimeOriginal) : false
+
+      if (!hasExif) {
+        // EXIF データが無いとみなす
+        this.exif = null
+        this.imgSrc = null
+        this.noExifAlert = true
+
+        return
       }
 
-      reader.readAsDataURL(this.file)
+      const reader = new FileReader()
+      const isHEIC = this.file.name.toLowerCase().endsWith('.heic') || this.file.name.toLowerCase().endsWith('.heif')
+
+      reader.onload = e => {
+        this.imgSrc = e.target.result
+        this.$nextTick(() => this.suggestManufacturerAndModel())
+      }
+
+      if (isHEIC) {
+        const converted = await heic2any({
+          blob: this.file,
+          toType: 'image/png',
+          multiple: true
+        })
+
+        reader.readAsDataURL(converted[0])
+      } else {
+        reader.readAsDataURL(this.file)
+      }
+
       //this.imgSrc = window.URL.createObjectURL(this.file)
     },
     suggestSize() {
@@ -946,8 +966,55 @@ export default {
     onSaveFinished() {
       this.saveDialog = false
     },
-    onIntentReceived({ detail }) {
-      this.imgSrc = 'data:image/jpeg;base64,' + detail.data
+    async onIntentReceived({ detail }) {
+      const dataUrl = `data:${detail.type};base64,${detail.data}`
+
+      this.exif = await exifr.parse(dataUrl)
+      console.log('exifr', this.exif)
+
+      const hasExif = this.exif ? (this.exif.Make || this.exif.Model || this.exif.ModifyDate || this.exif.DateTimeOriginal) : false
+
+      if (!hasExif) {
+        // EXIF データが無いとみなす
+        this.exif = null
+        this.imgSrc = null
+        this.noExifAlert = true
+
+        return
+      }
+
+      const isHEIC = detail.type !== 'image/jpeg'
+
+      if (isHEIC) {
+        const reader = new FileReader()
+
+        reader.onload = e => {
+          this.imgSrc = e.target.result
+          this.$nextTick(() => this.suggestManufacturerAndModel())
+        }
+
+        const bin = window.atob(detail.data)
+        const byteArr = new Array(bin.length)
+
+        for (let i = 0; i < bin.length; i++) {
+          byteArr[i] = bin.charCodeAt(i)
+        }
+
+        const uint8Arr = new Uint8Array(byteArr)
+
+        const converted = await heic2any({
+          blob: new Blob(uint8Arr, {
+            type: detail.type
+          }),
+          toType: 'image/png',
+          multiple: true
+        })
+
+        reader.readAsDataURL(converted)
+      } else {
+        this.imgSrc = dataUrl
+        this.$nextTick(() => this.suggestManufacturerAndModel())
+      }
     }
   },
   mounted() {

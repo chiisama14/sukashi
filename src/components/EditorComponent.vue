@@ -1,8 +1,8 @@
 <template>
   <div class="editor-component">
-    <img v-if="imgSrc" :src="imgSrc" ref="image" @load="loadExif" :style="{ display: 'none' }" />
+    <img v-if="imgSrc" :src="imgSrc" @load="imageLoaded" ref="image" :style="{ display: 'none' }" />
     <img src="../../public/icon.png" :style="{ display: 'none' }" ref="logo" />
-    <template v-if="exif">
+    <template v-if="theme">
       <div class="editor-content" ref="preview" :style="[ contentMargin, { transform: `scale(${scale})`, transformOrigin: 'top left', width: `${editorWidth}px`, height: `${editorHeight}px`, fontFamily: `'${config.fontName}'` } ]">
         <img :src="imgSrc" ref="draggableImage" class="interact absolute" :style="[ initialPointStyle, interactStyle, imgFilter ]" />
         <!--<canvas ref="canvas" class="interact absolute" :style="[ initialPointStyle, interactStyle ]" />-->
@@ -25,7 +25,6 @@ import interact from '@interactjs/interact'
 import { Parser } from 'expr-eval'
 
 import http from '../utils/http'
-import EXIF from 'exif-js'
 import * as describe from '../exif/describe'
 
 import watermark from '../watermark'
@@ -36,6 +35,7 @@ export default {
   name: 'EditorComponent',
   props: {
     imgSrc: String,
+    exif: Object,
     config: Object
   },
   data() {
@@ -49,7 +49,6 @@ export default {
       landscape: null,
       
       // EXIF
-      exif: null,
       manufacturer: null,
       model: null,
       shutterSpeed: null,
@@ -117,7 +116,6 @@ export default {
         filters.push(`sepia(${this.config.sepia}%)`)
       }
 
-
       return {
         'filter': filters.join(' ')
       }
@@ -151,11 +149,24 @@ export default {
         return null
       }
 
-      if (!this.exif.DateTimeOriginal) {
+      const targetDate = this.exif.DateTimeOriginal || this.exif.ModifyDate
+
+      if (!targetDate) {
         return null
       }
 
-      return this.exif.DateTimeOriginal.replace(/^(\d+):(\d+):(\d+)/, (_, $1, $2, $3) => `${$1}.${$2}.${$3}`)
+      return [
+        [
+          targetDate.getFullYear(),
+          (targetDate.getMonth() + 1).toString().padStart(2, '0'),
+          targetDate.getDate().toString().padStart(2, '0')
+        ].join('.'),
+        [
+          targetDate.getHours().toString().padStart(2, '0'),
+          targetDate.getMinutes().toString().padStart(2, '0'),
+          targetDate.getSeconds().toString().padStart(2, '0'),
+        ].join(':')
+      ].join(' ')
     },
     initialPointStyle() {
       if (!this.theme) {
@@ -188,39 +199,24 @@ export default {
     }
   },
   methods: {
-    loadExif() {
-      this.returnToOriginalPosition()
+    imageLoaded() {
+      const model = describe.model(this.exif.Make, this.exif.Model)
 
-      const that = this
+      if (!this.manufacturer) {
+        this.manufacturer = model.manufacturer
+      }
 
-      EXIF.getData(this.$refs.image, function() {
-        const exif = EXIF.getAllTags(this)
+      if (!this.model) {
+        this.model = model.model
+      }
 
-        if (Object.keys(exif).length === 0) {
-          that.$emit('exif-not-found', exif)
-          return
-        }
-        
-        that.exif = exif
+      this.shutterSpeed = describe.shutterSpeed(this.exif.ExposureTime)
+      this.fNumber = this.exif.FNumber
+      this.iso = this.exif.ISOSpeedRatings
 
-        console.log(exif, Object.keys(exif).length)
+      this.init()
 
-        const model = describe.model(exif.Make, exif.Model)
-
-        if (!that.manufacturer) {
-          that.manufacturer = model.manufacturer
-        }
-
-        if (!that.model) {
-          that.model = model.model
-        }
-
-        that.shutterSpeed = describe.shutterSpeed(exif.ExposureTime)
-        that.fNumber = exif.FNumber
-        that.iso = exif.ISOSpeedRatings
-
-        that.$emit('exif-loaded', exif)
-      })
+      this.$emit('image-loaded')
     },
     async init() {
       // エディター領域の表示倍率調整
@@ -338,10 +334,10 @@ export default {
           elements.push(`${this.focalLength}mm`)
         }
 
-        ret =  elements.join(divider)
+        ret = elements.join(divider)
 
         if (this.date) {
-          ret = `${this.date}&nbsp;&nbsp;|&nbsp;&nbsp;` + ret
+          ret = `${this.date}${ ret ? '&nbsp;&nbsp;|&nbsp;&nbsp;' : ''}` + ret
         }
 
         return ret

@@ -49,7 +49,8 @@ document.addEventListener('deviceready', () => {
       window.cordova.openwith.load(intent.items[0], data => {
         window.dispatchEvent(new CustomEvent('intent', {
           detail: {
-            data
+            data,
+            type: intent.items[0].type
           }
         }))
 
