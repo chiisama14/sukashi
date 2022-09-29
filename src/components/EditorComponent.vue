@@ -126,7 +126,7 @@ export default {
       }
 
       if (this.config.preferConvertedFocalLength) {
-        return this.exif.FocalLengthIn35mmFilm || this.exif.FocalLength
+        return this.exif.FocalLengthIn35mmFormat || this.exif.FocalLength
       } else {
         return this.exif.FocalLength
       }
@@ -212,7 +212,7 @@ export default {
 
       this.shutterSpeed = describe.shutterSpeed(this.exif.ExposureTime)
       this.fNumber = this.exif.FNumber
-      this.iso = this.exif.ISOSpeedRatings
+      this.iso = this.exif.ISO
 
       this.init()
 
@@ -565,15 +565,23 @@ export default {
         }, mimeType, quality)
       */
       } else if (this.isIPadBrowser || this.isIPhoneBrowser) {
-        canvas.toDataURL(url => {
+        canvas.toBlob(blob => {
           // iOS Browser の a タグダウンロードが上手くいかないので、Blob URL を作成して表示する
-          //const url = URL.createObjectURL(blob) // revoke は App.vue 側で行う
-
+          const url = URL.createObjectURL(blob) // revoke は App.vue 側で行う
           this.scale = prevScale
           this.isProcessing = false
 
           this.$emit('image-exported', url)
         }, mimeType, quality)
+
+        /*canvas.toDataURL(url => {
+          // iOS Browser の a タグダウンロードが上手くいかないので、Blob URL を作成して表示する
+          //const url = URL.createObjectURL(blob) // revoke は App.vue 側で行う
+          this.scale = prevScale
+          this.isProcessing = false
+
+          this.$emit('image-exported', url)
+        }, mimeType, quality)*/
       } else {
         canvas.toBlob(function(blob) {
           { // "a" tag workaround

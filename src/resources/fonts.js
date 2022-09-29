@@ -49,9 +49,9 @@ export const fontFamily = [ {
   example: 'vivo-like',
   license: 'Copyright 2020 The Kanit Project Authors (https://github.com/cadsondemak/kanit)',
   type: 'OFL11'
-}, {
+}/*, {
   family: 'F5.6',
   example: 'LEICA-like',
   license: 'Copyright (c) 2018, Sora Sagano (sagano@dotcolon.net)',
   type: 'OFL11'
-} ]
+}*/ ]

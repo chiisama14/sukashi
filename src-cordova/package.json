@@ -18,6 +18,7 @@
     "cordova-ios": "^6.2.0",
     "cordova-plugin-advanced-http": "^3.3.1",
     "cordova-plugin-android-mediastore": "file:../../cordova-plugin-android-mediastore",
+    "cordova-plugin-app-version": "^0.1.14",
     "cordova-plugin-device": "^2.1.0",
     "cordova-plugin-file": "^7.0.0",
     "cordova-plugin-inappbrowser": "^5.0.0",
@@ -44,8 +45,10 @@
       "cc.fovea.cordova.openwith": {
         "ANDROID_MIME_TYPE": "image/jpeg",
         "IOS_URL_SCHEME": "sukashi",
-        "IOS_UNIFORM_TYPE_IDENTIFIER": "public.image"
-      }
+        "IOS_UNIFORM_TYPE_IDENTIFIER": "public.image",
+        "ANDROID_EXTRA_ACTIONS": " "
+      },
+      "cordova-plugin-app-version": {}
     }
   }
 }

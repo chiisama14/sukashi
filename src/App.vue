@@ -46,7 +46,7 @@
 
     <q-page-container>
       <q-page :style-fn="styleFn">
-        <EditorComponent v-if="imgSrc" :key="imgSrc.substring(0, 100)" :imgSrc="imgSrc" :exif="exif" :config="editorConfig" ref="editor" @image-loaded="suggestSize" @image-exported="onImageExported" @save-finished="onSaveFinished" @editor-size-changed="suggestSize" />
+        <EditorComponent v-if="imgSrc" :key="imgSrc.substring(0, 5000)" :imgSrc="imgSrc" :exif="exif" :config="editorConfig" ref="editor" @image-loaded="suggestSize" @image-exported="onImageExported" @save-finished="onSaveFinished" @editor-size-changed="suggestSize" />
         <div v-else :style="{ height: '100%', paddingTop: '35vh', paddingLeft: '10vw', paddingRight: '10vw', textAlign: 'center' }">
           {{ $t('OPEN_IMAGE_GUIDE_TEXT') }}
           <template v-if="isSafari || isIPhoneBrowser || isIPadBrowser">
@@ -83,6 +83,16 @@
         <q-btn-dropdown stretch flat :label="$t('EDIT_BUTTON_LABEL')" auto-close>
           <q-list separator>
             <q-item-label header>{{ $t('EDIT_GUIDE_LABEL') }}</q-item-label>
+
+            <q-item clickable v-ripple @click="openCropModal">
+              <q-item-section avatar side>
+                <q-icon name="crop_rotate" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ $t('CROP_ROTATE_LABEL') }}</q-item-label>
+              </q-item-section>
+            </q-item>
+
             <q-item clickable v-ripple @click="returnToOriginalPosition">
               <q-item-section avatar side>
                 <q-icon name="restart_alt" />
@@ -449,7 +459,7 @@
         <q-card-section class="q-pt-none">
           <img src="../public/icon.png" style="width: 60%; display: block; margin: 0 auto;" />
           <div style="text-align: center; font-weight: bold;">
-            Sukashi App
+            Sukashi App {{ versionNumber }}
           </div>
           <div style="text-align: center;">
             Developed by <a href="https://twitter.com/chiisama14" target="_blank">@chiisama14</a> (<a href="https://milky.blue" target="_blank">milky.blue</a>)
@@ -482,6 +492,24 @@
 
         <q-card-actions align="right">
           <q-btn flat label="OK" color="primary" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="cropModal" class="crop-modal" persistent full-width>
+      <q-card>
+        <q-card-section>
+          <div class="text-h6">{{ $t('CROP_ROTATE_LABEL') }}</div>
+        </q-card-section>
+
+        <div style="max-height: 70vh">
+          <img ref="cropTargetImage" :src="originalImgSrc">
+        </div>
+
+        <q-card-actions align="right">
+          <q-btn flat icon="rotate_90_degrees_cw" color="primary" @click="rotateCropImage" />
+          <q-btn flat :label="$t('CANCEL_TEXT')" color="primary" @click="closeCropModal(false)" />
+          <q-btn flat :label="$t('DONE_TEXT')" color="primary" @click="closeCropModal(true)" />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -588,6 +616,8 @@
 import canvasSize from 'canvas-size'
 import heic2any from 'heic2any'
 import exifr from 'exifr'
+import Cropper from 'cropperjs'
+import 'cropperjs/dist/cropper.css'
 
 import watermark from './watermark'
 import { licenses, fontFamily } from './resources/fonts'
@@ -602,6 +632,9 @@ export default {
     EditorComponent
   },
   computed: {
+    versionNumber() {
+      return window.versionNumber || ''
+    },
     watermark() {
       return watermark
     },
@@ -693,8 +726,13 @@ export default {
       grayscale: 0,
       sepia: 0,
 
+      cropper: null,
+      cropData: null,
+      cropDataTmp: null,
+
       //
       exif: null,
+      originalImgSrc: null,
       imgSrc: null,
       blobUrl: null,
 
@@ -706,6 +744,7 @@ export default {
       noExifAlert: false,
       saveDialog: false,
       aboutModal: false,
+      cropModal: false,
       brightnessModal: false,
       saturateModal: false,
       contrastModal: false,
@@ -805,7 +844,14 @@ export default {
     returnToOriginalPosition() {
       this.$refs.editor.returnToOriginalPosition()
     },
-    suggestManufacturerAndModel() {
+    onImageLoaded() {
+      this.cropData = null
+      
+      if (this.cropper) {
+        this.cropper.destroy()
+        this.cropper = null
+      }
+
       const manufacturerSuggestion = window.localStorage[`suggestion/${this.exif.Make}/${this.exif.Model}/manufacturer`]
 
       if (manufacturerSuggestion) {
@@ -836,6 +882,77 @@ export default {
     setupTwitterAccount() {
       this.isTwitterAccountWatermarkEnabled = this.additional === 'twitter'
       this.twitterPrompt = true
+    },
+    openCropModal() {
+      this.cropModal = true
+
+      this.$nextTick(() => {
+        const { naturalHeight, naturalWidth } = this.$refs.cropTargetImage
+
+        this.cropper = new Cropper(this.$refs.cropTargetImage, {
+          viewMode: 1,
+          data: this.cropData || {
+            x: 0,
+            y: 0,
+            height: naturalHeight,
+            width: naturalWidth,
+            rotate: 0,
+            scaleX: 1,
+            scaleY: 1
+          },
+          crop: this.onCrop
+        })
+      })
+    },
+    onCrop(event) {
+      this.cropDataTmp = event.detail
+    },
+    closeCropModal(submit) {
+      if (submit) {
+        this.cropData = this.cropDataTmp
+
+        this.imgSrc = this.cropper.getCroppedCanvas().toDataURL('image/jpeg')
+        this.$nextTick(() => this.onImageLoaded())
+      }
+
+      this.cropModal = false
+
+      if (this.cropper) {
+        this.cropper.destroy()
+        this.cropper = null
+      }
+    },
+    rotateCropImage() {
+      this.cropper.rotate(90)
+/*
+      回転させたときに全体が表示されるようにしたい、、、ができなかったので一旦保留
+      const { naturalHeight, naturalWidth } = this.$refs.cropTargetImage
+
+      this.cropper.setData({
+        x: 0,
+        y: 0,
+        height: naturalHeight,
+        width: naturalWidth,
+        rotate: 90,
+        scaleX: 1,
+        scaleY: 1
+      })
+
+      const containerSize = this.cropper.getContainerData()
+      let zoomRatio = Math.min(containerSize.width / naturalWidth, containerSize.height / naturalHeight)
+
+      if (this.cropDataTmp.rotate < 90) {
+        // do nothing
+      } else if (this.cropDataTmp.rotate < 180) {
+        zoomRatio *= Math.min(naturalWidth, naturalHeight) / Math.max(naturalWidth, naturalHeight)
+      } else if (this.cropDataTmp.rotate < 270) {
+        // do nothing
+      } else {
+        zoomRatio *= Math.min(naturalWidth, naturalHeight) / Math.max(naturalWidth, naturalHeight)
+      }
+
+      console.log(this.cropDataTmp.rotate, zoomRatio)
+      this.cropper.zoomTo(zoomRatio, { x: containerSize.width / 2, y: containerSize.height / 2 })*/
     },
     updateManufacturer() {
       const changed = this.$refs.editor.getManufacturer() !== this.manufacturerOverride
@@ -880,6 +997,7 @@ export default {
       if (!hasExif) {
         // EXIF データが無いとみなす
         this.exif = null
+        this.originalImgSrc = null
         this.imgSrc = null
         this.noExifAlert = true
 
@@ -890,8 +1008,9 @@ export default {
       const isHEIC = this.file.name.toLowerCase().endsWith('.heic') || this.file.name.toLowerCase().endsWith('.heif')
 
       reader.onload = e => {
+        this.originalImgSrc = e.target.result
         this.imgSrc = e.target.result
-        this.$nextTick(() => this.suggestManufacturerAndModel())
+        this.$nextTick(() => this.onImageLoaded())
       }
 
       if (isHEIC) {
@@ -977,6 +1096,7 @@ export default {
       if (!hasExif) {
         // EXIF データが無いとみなす
         this.exif = null
+        this.originalImgSrc = null
         this.imgSrc = null
         this.noExifAlert = true
 
@@ -989,8 +1109,9 @@ export default {
         const reader = new FileReader()
 
         reader.onload = e => {
+          this.originalImgSrc = e.target.result
           this.imgSrc = e.target.result
-          this.$nextTick(() => this.suggestManufacturerAndModel())
+          this.$nextTick(() => this.onImageLoaded())
         }
 
         const bin = window.atob(detail.data)
@@ -1012,8 +1133,9 @@ export default {
 
         reader.readAsDataURL(converted)
       } else {
+        this.originalImgSrc = dataUrl
         this.imgSrc = dataUrl
-        this.$nextTick(() => this.suggestManufacturerAndModel())
+        this.$nextTick(() => this.onImageLoaded())
       }
     }
   },
@@ -1023,6 +1145,10 @@ export default {
       // 本来設定できないパターン
       this.openShareSheetAfterSaving = false
       this.shareOnly = false
+    }
+
+    if (this.font === 'F5.6') {
+      this.font = 'Lato'
     }
 
     this.exportSizesForThisImage = window.deepCopy(this.exportSizes)
@@ -1052,6 +1178,18 @@ body.desktop .q-focus-helper:before, body.desktop .q-focus-helper:after {
 <style lang="stylus">
 #app {
   overflow: hidden;
+}
+
+.crop-modal {
+  img {
+    display: block;
+    max-width: 100%;  
+  }
+  
+  .q-dialog__backdrop {
+    background-color: rgba(0, 0, 0, 0.9) !important;
+    backdrop-filter: blur(2px);
+  }
 }
 
 .backdrop-opacity-1 {

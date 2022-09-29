@@ -22,25 +22,7 @@ createApp(App)
   .use(device)
   .mount('#app')
 
-// cordova
-document.addEventListener('deviceready', () => {
-  // modify link behavior
-  if (window.isAndroidApp()) {
-    document.querySelectorAll('a').forEach(el => {
-      if (!((el.getAttribute('href') || '').startsWith('http'))) {
-        return
-      }
-
-      el.addEventListener('click', e => {
-        window.navigator.app.loadUrl(el.getAttribute('href'), { openExternal: true })
-        e.preventDefault()
-      })
-    })
-  } else {
-    // TODO: for iOS, need another handling
-    // https://stackoverflow.com/questions/17887348/phonegap-open-link-in-browser
-  }
-
+const handleSharedImage = () => {
   // share with
   window.cordova.openwith.init()
 
@@ -64,7 +46,36 @@ document.addEventListener('deviceready', () => {
       }
     }
   })
+}
+
+// cordova
+document.addEventListener('deviceready', async () => {
+  // modify link behavior
+  if (window.isAndroidApp()) {
+    document.querySelectorAll('a').forEach(el => {
+      if (!((el.getAttribute('href') || '').startsWith('http'))) {
+        return
+      }
+
+      el.addEventListener('click', e => {
+        window.navigator.app.loadUrl(el.getAttribute('href'), { openExternal: true })
+        e.preventDefault()
+      })
+    })
+
+    handleSharedImage()
+  } else {
+    // TODO: for iOS, need another handling
+    // https://stackoverflow.com/questions/17887348/phonegap-open-link-in-browser
+  }
+
+  window.versionNumber = await window.cordova.getAppVersion.getVersionNumber()
 }, false)
+
+// cordova
+document.addEventListener('resume', () => {
+  handleSharedImage()
+})
 
 window.isBrowser = () => {
   return !window.device

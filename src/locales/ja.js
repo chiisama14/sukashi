@@ -18,6 +18,7 @@ export default {
   //
   EDIT_BUTTON_LABEL: '編集',
   EDIT_GUIDE_LABEL: '編集',
+  CROP_ROTATE_LABEL: 'クロップ・回転',
   RESET_TO_INITIAL_POSITION_LABEL: '画像を最初の位置に戻す',
   PREFER_35MM_CONVERTED_FOCAL_LENGTH_LABEL: '35mm 換算焦点距離を利用する',
   PREFER_35MM_CONVERTED_FOCAL_LENGTH_HINT: '有効の場合、35mm 換算焦点距離を優先して表示します（EXIF データに含まれている場合）',
@@ -57,7 +58,7 @@ export default {
   TWITTER_ACCOUNT_SETTING_SCREEN_NAME_HINT: 'スクリーンネームを入力した場合、アイコン画像を取得するため、入力値がサーバに送信されます。',
 
   //
-  WAITING_EXPORT_DIALOG_TEXT: '画像保存中です。少々お待ちください。',
+  WAITING_EXPORT_DIALOG_TEXT: '画像書き出し中です。少々お待ちください。',
   EXPORT_COMPLETED_HEADING: '書き出しが完了しました！',
   EXPORT_COMPLETED_TEXT: '保存する場合、画像をロングタップしてください。',
 
@@ -78,4 +79,6 @@ export default {
   SEPIA_TEXT: 'セピア',
   FONT_SIZE_TEXT: 'フォントサイズ',
   RESET_TEXT: 'リセット',
+  DONE_TEXT: '完了',
+  CANCEL_TEXT: 'キャンセル',
 }

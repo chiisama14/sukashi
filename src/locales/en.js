@@ -18,6 +18,7 @@ export default {
   //
   EDIT_BUTTON_LABEL: 'Edit',
   EDIT_GUIDE_LABEL: 'Edit',
+  CROP_ROTATE_LABEL: 'Crop & Rotate Image',
   RESET_TO_INITIAL_POSITION_LABEL: 'Reset to Initial Position',
   PREFER_35MM_CONVERTED_FOCAL_LENGTH_LABEL: 'Prefer 35mm-Converted Focal Length',
   PREFER_35MM_CONVERTED_FOCAL_LENGTH_HINT: 'Use 35mm-converted focal length instead of original focal length (if available)',
@@ -78,4 +79,6 @@ export default {
   SEPIA_TEXT: 'Sepia',
   FONT_SIZE_TEXT: 'Font Size',
   RESET_TEXT: 'Reset',
+  DONE_TEXT: 'Done',
+  CANCEL_TEXT: 'Cancel',
 }
